@@ -94,74 +94,45 @@ while (TRUE) {
 bus_stops <- bind_rows(all_data)
 
 
-# Passenger Volume for Buses (February)
+# Passenger Volume for Buses - By Bus Stops (2023 Dec)
+pv_bus_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202312.csv")
 
-resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/PV/Bus?Date=202402"
-res = GET(resource_url, add_headers(AccountKey = Sys.getenv("LTA_KEY"),accept = "application/json"))
-res$status_code
-res_list <- content(res, type = "text") %>% fromJSON(flatten = TRUE)
-res_list[["value"]][["Link"]]
+# Passenger Volume for Buses - By Bus Stops (2024 Jan)
+pv_bus_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202401.csv")
 
+# Passenger Volume for Buses - By Bus Stops (2024 Feb)
+pv_bus_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202402.csv")
 
-# Passenger Volume for Buses (March)
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2023 Dec)
+pv_bus_od_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202312.csv")
 
-resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/PV/Bus?Date=202403"
-res = GET(resource_url, add_headers(AccountKey = Sys.getenv("LTA_KEY"),accept = "application/json"))
-res$status_code
-res_list <- content(res, type = "text") %>% fromJSON(flatten = TRUE)
-res_list[["value"]][["Link"]]
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Jan)
+pv_bus_od_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202401.csv")
 
-
-# Passenger Volume by Origin Destination Bus Stops (February)
-
-resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/PV/ODBus?Date=202402"
-res = GET(resource_url, add_headers(AccountKey = Sys.getenv("LTA_KEY"),accept = "application/json"))
-res$status_code
-res_list <- content(res, type = "text") %>% fromJSON(flatten = TRUE)
-res_list[["value"]][["Link"]]
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Feb)
+pv_bus_od_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202402.csv")
 
 
-# Passenger Volume by Origin Destination Bus Stops (March)
-
-resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/PV/ODBus?Date=202403"
-res = GET(resource_url, add_headers(AccountKey = Sys.getenv("LTA_KEY"),accept = "application/json"))
-res$status_code
-res_list <- content(res, type = "text") %>% fromJSON(flatten = TRUE)
-res_list[["value"]][["Link"]]
 
 
-# Passenger Volume by Origin Destination Train Stations (February)
+# Passenger Volume for Trains - By Train Stops (2023 Dec)
+pv_train_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv")
 
-resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/PV/ODTrain?Date=202402"
-res = GET(resource_url, add_headers(AccountKey = Sys.getenv("LTA_KEY"),accept = "application/json"))
-res$status_code
-res_list <- content(res, type = "text") %>% fromJSON(flatten = TRUE)
-res_list[["value"]][["Link"]]
+# Passenger Volume for Trains - By Train Stops (2024 Jan)
+pv_train_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv")
 
-# Passenger Volume by Origin Destination Train Stations (March)
+# Passenger Volume for Trains - By Train Stops (2024 Feb)
+pv_train_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv")
 
-resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/PV/ODTrain?Date=202403"
-res = GET(resource_url, add_headers(AccountKey = Sys.getenv("LTA_KEY"),accept = "application/json"))
-res$status_code
-res_list <- content(res, type = "text") %>% fromJSON(flatten = TRUE)
-res_list[["value"]][["Link"]]
+# Passenger Volume for Trains - By Origin Destination (2023 Dec)
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
 
+# Passenger Volume for Trains - By Origin Destination (2024 Jan)
+pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv")
 
-# Passenger Volume for Trains (March)
+# Passenger Volume for Trains - By Origin Destination (2024 Feb)
+pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
 
-resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/PV/Train?Date=202403"
-res = GET(resource_url, add_headers(AccountKey = Sys.getenv("LTA_KEY"),accept = "application/json"))
-res$status_code
-res_list <- content(res, type = "text") %>% fromJSON(flatten = TRUE)
-res_list[["value"]][["Link"]]
-
-# Passenger Volume for Trains (February)
-
-resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/PV/Train?Date=202402"
-res = GET(resource_url, add_headers(AccountKey = Sys.getenv("LTA_KEY"),accept = "application/json"))
-res$status_code
-res_list <- content(res, type = "text") %>% fromJSON(flatten = TRUE)
-res_list[["value"]][["Link"]]
 
 
 # Taxi Availability
