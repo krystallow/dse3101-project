@@ -1,0 +1,3 @@
+library(prophet)
+model <- prophet()
+
