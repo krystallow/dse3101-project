@@ -1,4 +1,3 @@
-## TEST
 library(httr)
 library(jsonlite)
 library(tidyverse)
@@ -9,6 +8,7 @@ library(tidyverse)
 ## Returns detailed service information for all buses currently in operation, including: first stop, last stop, peak / offpeak frequency of dispatch.
 
 resource_url <- "http://datamall2.mytransport.sg/ltaodataservice/BusServices"
+
 
 all_data <- list()
 skip_value <- 0
