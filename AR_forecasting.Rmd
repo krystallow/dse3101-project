@@ -9,6 +9,7 @@ output: html_document
 library(tidyverse)
 library(stringr)
 library(partsm)
+library(forecast)
 
 ##omg pls work
 ```
@@ -81,4 +82,10 @@ pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
 pv_train_od_202401 <- pv_train_od_202401 %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
   arrange(trip, seasonal_dummy, TIME_PER_HOUR)
+
+fit <- auto.arima(pv_train_od_202312, xreg = seasonal_dummy)
+
+# Forecast
+forecast_values <- forecast(fit, xreg = dummy_matrix, h = 12)
+print(forecast_values)
 ```
