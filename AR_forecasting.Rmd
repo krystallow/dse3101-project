@@ -9,6 +9,8 @@ output: html_document
 library(tidyverse)
 library(stringr)
 library(partsm)
+
+##omg pls work
 ```
 
 ### Load in PV Data with Seasonal Dummy - WEEKEND/HOLIDAY or WEEKDAY
