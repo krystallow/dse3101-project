@@ -1,3 +1,4 @@
+
 library(tidyverse)
 library(lubridate)
 library(prophet)
@@ -54,3 +55,4 @@ model <- fit.prophet(model, pv_train_od)
 future <- make_future_dataframe(model, periods = 365)
 future$is_weekday <- ifelse(future$DAY_TYPE == 'WEEKDAY', 1, 0)
 forecast = predict(model,future)
+
