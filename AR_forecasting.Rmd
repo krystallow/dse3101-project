@@ -1,0 +1,24 @@
+---
+title: "AR_forecasting"
+author: "Krystal"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Passenger Volume for Buses - By Bus Stops (2023 Dec)
+pv_bus_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202312.csv")
+
+# Passenger Volume for Buses - By Bus Stops (2024 Jan)
+pv_bus_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202401.csv")
+
+# Passenger Volume for Buses - By Bus Stops (2024 Feb)
+pv_bus_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202402.csv")
+
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2023 Dec)
+pv_bus_od_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202312.csv")
+
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Jan)
+pv_bus_od_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202401.csv")
+
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Feb)
+pv_bus_od_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202402.csv")
