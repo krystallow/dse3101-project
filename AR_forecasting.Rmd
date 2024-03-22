@@ -79,6 +79,4 @@ pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
 pv_train_od_202401 <- pv_train_od_202401 %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
   arrange(trip, seasonal_dummy, TIME_PER_HOUR)
-
-
 ```
