@@ -5,20 +5,80 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
+```{r}
+library(tidyverse)
+library(stringr)
+library(partsm)
+```
+
+### Load in PV Data with Seasonal Dummy - WEEKEND/HOLIDAY or WEEKDAY
+```{r}
 # Passenger Volume for Buses - By Bus Stops (2023 Dec)
-pv_bus_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202312.csv")
+pv_bus_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
 # Passenger Volume for Buses - By Bus Stops (2024 Jan)
-pv_bus_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202401.csv")
+pv_bus_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
 # Passenger Volume for Buses - By Bus Stops (2024 Feb)
-pv_bus_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202402.csv")
+pv_bus_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
 # Passenger Volume for Buses - By Origin Destination Bus Stops (2023 Dec)
-pv_bus_od_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202312.csv")
+pv_bus_od_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
 # Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Jan)
-pv_bus_od_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202401.csv")
+pv_bus_od_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
 # Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Feb)
-pv_bus_od_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202402.csv")
+pv_bus_od_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Train Stops (2023 Dec)
+pv_train_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+
+# Passenger Volume for Trains - By Train Stops (2024 Jan)
+pv_train_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Train Stops (2024 Feb)
+pv_train_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Origin Destination (2023 Dec)
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Origin Destination (2024 Jan)
+pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Origin Destination (2024 Feb)
+pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+```
+
+```{r}
+pv_train_od_202401 <- pv_train_od_202401 %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
+  arrange(trip, seasonal_dummy, TIME_PER_HOUR)
+
+
+```
