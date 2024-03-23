@@ -80,3 +80,38 @@ m <- fit.prophet(m, pv_train_od)
 #future$is_weekday <- ifelse(future$DAY_TYPE == 'WEEKDAY', 1, 0)
 #forecast = predict(model,future)
 
+# Bus Data
+
+pv_bus_od = rbind(pv_bus_od_202312,pv_bus_od_202401,pv_bus_od_202402)
+
+# change class of date to Date
+pv_bus_od = pv_bus_od %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+
+pv_bus_od$ds = pv_bus_od$YEAR_MONTH
+# Combine date and hour
+pv_bus_od$ds <- as.POSIXct(paste(pv_bus_od$ds, pv_bus_od$TIME_PER_HOUR), format = "%Y-%m-%d %H")
+
+#converting everything to numeric for Prophet
+pv_bus_od$y = pv_bus_od$TOTAL_TRIPS
+pv_bus_od$ORIGIN_PT_CODE <- as.numeric(factor(pv_bus_od$ORIGIN_PT_CODE))
+pv_bus_od$DESTINATION_PT_CODE <- as.numeric(factor(pv_bus_od$DESTINATION_PT_CODE))
+#pv_train_od$is_weekday <- ifelse(pv_train_od$DAY_TYPE == 'WEEKDAY', 1, 0)
+pv_bus_od$DAY_TYPE <- as.numeric(factor(pv_bus_od$DAY_TYPE))
+
+
+pv_bus_od = pv_bus_od %>%
+  select(-PT_TYPE) %>%
+  select(-TOTAL_TRIPS) %>%
+  select(-YEAR_MONTH)
+
+# Initialize model
+m_bus <- prophet()
+
+# Add additional regressors
+m_bus <- add_regressor(m_bus, 'DAY_TYPE')
+m_bus <- add_regressor(m_bus, 'TIME_PER_HOUR')
+m_bus <- add_regressor(m_bus, 'ORIGIN_PT_CODE')
+m_bus <- add_regressor(m_bus, 'DESTINATION_PT_CODE')
+# Fit the model
+m_bus <- fit.prophet(m_bus, pv_bus_od)
