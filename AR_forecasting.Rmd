@@ -11,7 +11,7 @@ library(stringr)
 library(partsm)
 library(forecast)
 
-##omg pls work
+#test
 ```
 
 ### Load in PV Data with Seasonal Dummy - WEEKEND/HOLIDAY or WEEKDAY
