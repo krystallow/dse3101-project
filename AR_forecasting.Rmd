@@ -10,8 +10,6 @@ library(tidyverse)
 library(stringr)
 library(partsm)
 library(forecast)
-
-#test
 ```
 
 ### Load in PV Data with Seasonal Dummy - WEEKEND/HOLIDAY or WEEKDAY
