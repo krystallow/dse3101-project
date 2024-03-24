@@ -83,44 +83,95 @@ combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_o
   mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
   mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
   mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
+  #mutate(YEAR_MONTH_HOUR = as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")) %>%
   mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
   mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
   mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
 
-testing_set <- pv_train_od_202402 %>%
+combined_train_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
+  
+str(combined_train_pv_od)
+```
+
+
+### TRAINS - AR MODEL with AIC to choose lags
+```{r}
+fit_arima <- function(data, order, seasonal_dummy) {
+  ar_model <- Arima(data, order = c(order, 0, 0), xreg = as.numeric(seasonal_dummy))
+  return(AIC(ar_model))
+}
+
+data <- combined_train_pv_od$TOTAL_TRIPS
+seasonal_dummy <- combined_train_pv_od$seasonal_dummy
+
+lags <- 1:5  # adjust and test, 5:10 takes damn long
+
+aic_values <- numeric(length(lags))
+
+# fit diff lags to model
+for (i in seq_along(lags)) {
+  aic_values[i] <- fit_arima(data, lags[i], seasonal_dummy)
+}
+
+best_lag <- lags[which.min(aic_values)]
+
+# order parameter specifies order(number of lags, order of difference, number of moving average components) - set to 0 for standard AR >> change accordingly 
+ar_model <- Arima(data, order = c(best_lag, 0, 0), xreg = as.numeric(as.character(seasonal_dummy)))
+
+summary(ar_model)
+
+#forecast_result <- forecast(ar_model)
+
+#print(forecast_result)
+```
+
+```{r}
+# Merge all Buses By OD Passenger Volume data for Dec 2023, Jan 2024 and Feb 2023
+combined_bus_pv_od <- rbind(pv_bus_od_202312, pv_bus_od_202401, pv_bus_od_202402) %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
   mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
   mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
   mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
+  #mutate(YEAR_MONTH_HOUR = as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")) %>%
   mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
   mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
   mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
 
-testing_set$seasonal_dummy <- as.numeric(testing_set$seasonal_dummy)
+combined_train_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
   
 str(combined_train_pv_od)
-
-# fit AR model
-# order parameter specifies order of AR(p), order of difference and moving average components - set to 0 for standard AR
-p = 1    ### REFINE USING AIC
-ar_model <- Arima(combined_train_pv_od$TOTAL_TRIPS, order = c(p, 0, 0))
-combined_train_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
-combined_train_pv_od$seasonal_dummy <- as.factor(combined_train_pv_od$seasonal_dummy)
-combined_train_pv_od$trip <- as.factor(combined_train_pv_od$trip)
-
-# Create dummy variables for seasonal_dummy
-seasonal_dummy_dummies <- model.matrix(~ seasonal_dummy - 1, data = combined_train_pv_od)
-
-# Combine exogenous variables
-exog_vars <- cbind(seasonal_dummy_dummies, combined_train_pv_od$YEAR_MONTH_HOUR)
-
-# Fit SARIMAX model
-arima_order <- c(1, 0, 0)  # Set your desired ARIMA order (p, d, q)
-arima_model <- Arima(combined_train_pv_od$TOTAL_TRIPS, order = arima_order, xreg = exog_vars)
-
-# Generate forecasts
-forecast_result <- forecast(sarima_model)
-
-# Print the forecasts
-print(forecast_result)
 ```
+
+### BUSES - AR MODEL with AIC to choose lags
+```{r}
+fit_arima <- function(data, order, seasonal_dummy) {
+  ar_model <- Arima(data, order = c(order, 0, 0), xreg = as.numeric(seasonal_dummy))
+  return(AIC(ar_model))
+}
+
+data <- combined_train_pv_od$TOTAL_TRIPS
+seasonal_dummy <- combined_train_pv_od$seasonal_dummy
+
+lags <- 1:5  # adjust and test, 5:10 takes damn long
+
+aic_values <- numeric(length(lags))
+
+# fit diff lags to model
+for (i in seq_along(lags)) {
+  aic_values[i] <- fit_arima(data, lags[i], seasonal_dummy)
+}
+
+best_lag <- lags[which.min(aic_values)]
+
+# order parameter specifies order(number of lags, order of difference, number of moving average components) - set to 0 for standard AR >> change accordingly 
+ar_model <- Arima(data, order = c(best_lag, 0, 0), xreg = as.numeric(as.character(seasonal_dummy)))
+
+summary(ar_model)
+
+#forecast_result <- forecast(ar_model)
+
+#print(forecast_result)
+```
+
