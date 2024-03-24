@@ -10,6 +10,7 @@ library(tidyverse)
 library(stringr)
 library(partsm)
 library(forecast)
+library(readxl)
 ```
 
 ### Load in PV Data with Seasonal Dummy - WEEKEND/HOLIDAY or WEEKDAY
@@ -77,13 +78,23 @@ pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
 ```
 
 ```{r}
-pv_train_od_202401 <- pv_train_od_202401 %>%
+# Merge all Train By OD Passenger Volume data for Dec 2023, Jan 2024 and Feb 2023
+combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_od_202402) %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
-  arrange(trip, seasonal_dummy, TIME_PER_HOUR)
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
+  mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
+  mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
+  
+str(combined_train_pv_od)
 
 fit <- auto.arima(pv_train_od_202312, xreg = seasonal_dummy)
 
 # Forecast
 forecast_values <- forecast(fit, xreg = dummy_matrix, h = 12)
 print(forecast_values)
+
+
 ```
