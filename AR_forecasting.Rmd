@@ -9,7 +9,6 @@ output: html_document
 library(tidyverse)
 library(stringr)
 library(forecast)
-library(readxl)
 ```
 
 ### Load in PV Data with Day Type Dummy - WEEKEND/HOLIDAY or WEEKDAY
