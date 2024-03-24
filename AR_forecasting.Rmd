@@ -8,12 +8,11 @@ output: html_document
 ```{r}
 library(tidyverse)
 library(stringr)
-library(partsm)
 library(forecast)
 library(readxl)
 ```
 
-### Load in PV Data with Seasonal Dummy - WEEKEND/HOLIDAY or WEEKDAY
+### Load in PV Data with Day Type Dummy - WEEKEND/HOLIDAY or WEEKDAY
 ```{r}
 # Passenger Volume for Buses - By Bus Stops (2023 Dec)
 pv_bus_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202312.csv") %>%
@@ -97,4 +96,14 @@ forecast_values <- forecast(fit, xreg = dummy_matrix, h = 12)
 print(forecast_values)
 
 
+# fit AR model
+# order parameter specifies order of AR(p), order of difference and moving average components - set to 0 for standard AR
+p = 1
+ar_model <- Arima(combined_train_pv_od$TOTAL_TRIPS, order = c(p, 0, 0))
+
+# Generate forecasts
+forecast_result <- forecast(ar_model)
+
+# Print the forecasts
+print(forecast_result)
 ```
