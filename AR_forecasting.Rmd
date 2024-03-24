@@ -86,23 +86,40 @@ combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_o
   mutate(trip = as.factor(trip)) %>%
   mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
   mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
+
+testing_set <- pv_train_od_202402 %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
+  mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
+  mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
+
+testing_set$seasonal_dummy <- as.numeric(testing_set$seasonal_dummy)
   
 str(combined_train_pv_od)
 
-fit <- auto.arima(pv_train_od_202312, xreg = seasonal_dummy)
-
-# Forecast
-forecast_values <- forecast(fit, xreg = dummy_matrix, h = 12)
-print(forecast_values)
-
-
 # fit AR model
 # order parameter specifies order of AR(p), order of difference and moving average components - set to 0 for standard AR
-p = 1
+p = 1    ### REFINE USING AIC
 ar_model <- Arima(combined_train_pv_od$TOTAL_TRIPS, order = c(p, 0, 0))
+combined_train_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
+combined_train_pv_od$seasonal_dummy <- as.factor(combined_train_pv_od$seasonal_dummy)
+combined_train_pv_od$trip <- as.factor(combined_train_pv_od$trip)
+
+# Create dummy variables for seasonal_dummy
+seasonal_dummy_dummies <- model.matrix(~ seasonal_dummy - 1, data = combined_train_pv_od)
+
+# Combine exogenous variables
+exog_vars <- cbind(seasonal_dummy_dummies, combined_train_pv_od$YEAR_MONTH_HOUR)
+
+# Fit SARIMAX model
+arima_order <- c(1, 0, 0)  # Set your desired ARIMA order (p, d, q)
+arima_model <- Arima(combined_train_pv_od$TOTAL_TRIPS, order = arima_order, xreg = exog_vars)
 
 # Generate forecasts
-forecast_result <- forecast(ar_model)
+forecast_result <- forecast(sarima_model)
 
 # Print the forecasts
 print(forecast_result)
