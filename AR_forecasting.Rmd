@@ -105,7 +105,7 @@ fit_arima <- function(data, order, seasonal_dummy) {
 data <- combined_train_pv_od$TOTAL_TRIPS
 seasonal_dummy <- combined_train_pv_od$seasonal_dummy
 
-lags <- 1:5  # adjust and test, 5:10 takes damn long
+lags <- 5:10  # adjust and test, 5:10 takes damn long
 
 aic_values <- numeric(length(lags))
 
@@ -151,7 +151,7 @@ fit_arima <- function(data, order, seasonal_dummy) {
   return(AIC(ar_model))
 }
 
-data <- combined_train_pv_od$TOTAL_TRIPS
+data <- combined_bus_pv_od$TOTAL_TRIPS
 seasonal_dummy <- combined_train_pv_od$seasonal_dummy
 
 lags <- 1:5  # adjust and test, 5:10 takes damn long
