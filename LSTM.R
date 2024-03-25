@@ -6,67 +6,93 @@ library(tensorflow)
 
 model <- keras_model_sequential()
 
-## ---- eval=FALSE--------------------------------------------------------------
-#  install.packages("keras")
 
-## -----------------------------------------------------------------------------
-#  devtools::install_github("rstudio/keras")
+# Passenger Volume for Buses - By Bus Stops (2023 Dec)
+pv_bus_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## ---- eval=FALSE--------------------------------------------------------------
-#  install.packages("keras")
-#  install_keras()
+# Passenger Volume for Buses - By Bus Stops (2024 Jan)
+pv_bus_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## -----------------------------------------------------------------------------
-#  library(keras)
-#  mnist <- dataset_mnist()
-#  x_train <- mnist$train$x
-#  y_train <- mnist$train$y
-#  x_test <- mnist$test$x
-#  y_test <- mnist$test$y
+# Passenger Volume for Buses - By Bus Stops (2024 Feb)
+pv_bus_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## -----------------------------------------------------------------------------
-#  # reshape
-#  x_train <- array_reshape(x_train, c(nrow(x_train), 784))
-#  x_test <- array_reshape(x_test, c(nrow(x_test), 784))
-#  # rescale
-#  x_train <- x_train / 255
-#  x_test <- x_test / 255
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2023 Dec)
+pv_bus_od_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## -----------------------------------------------------------------------------
-#  y_train <- to_categorical(y_train, 10)
-#  y_test <- to_categorical(y_test, 10)
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Jan)
+pv_bus_od_202401 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## -----------------------------------------------------------------------------
-#  model <- keras_model_sequential()
-#  model %>%
-#    layer_dense(units = 256, activation = 'relu', input_shape = c(784)) %>%
-#    layer_dropout(rate = 0.4) %>%
-#    layer_dense(units = 128, activation = 'relu') %>%
-#    layer_dropout(rate = 0.3) %>%
-#    layer_dense(units = 10, activation = 'softmax')
+# Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Feb)
+pv_bus_od_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## -----------------------------------------------------------------------------
-#  summary(model)
+# Passenger Volume for Trains - By Train Stops (2023 Dec)
+pv_train_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## -----------------------------------------------------------------------------
-#  model %>% compile(
-#    loss = 'categorical_crossentropy',
-#    optimizer = optimizer_rmsprop(),
-#    metrics = c('accuracy')
-#  )
 
-## ---- results='hide'----------------------------------------------------------
-#  history <- model %>% fit(
-#    x_train, y_train,
-#    epochs = 30, batch_size = 128,
-#    validation_split = 0.2
-#  )
+# Passenger Volume for Trains - By Train Stops (2024 Jan)
+pv_train_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## -----------------------------------------------------------------------------
-#  plot(history)
+# Passenger Volume for Trains - By Train Stops (2024 Feb)
+pv_train_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## ---- results = 'hide'--------------------------------------------------------
-#  model %>% evaluate(x_test, y_test)
+# Passenger Volume for Trains - By Origin Destination (2023 Dec)
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
-## ---- results = 'hide'--------------------------------------------------------
-#  model %>% predict_classes(x_test)
+# Passenger Volume for Trains - By Origin Destination (2024 Jan)
+pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Origin Destination (2024 Feb)
+pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+
+combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_od_202402) %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
+  mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
+  mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
+  #mutate(YEAR_MONTH_HOUR = as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
+
+combined_train_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
+
+combined_bus_pv_od <- rbind(pv_bus_od_202312, pv_bus_od_202401, pv_bus_od_202402) %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
+  mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
+  mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
+  #mutate(YEAR_MONTH_HOUR = as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
+
+#combined_bus_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
+
+str(combined_bus_pv_od)

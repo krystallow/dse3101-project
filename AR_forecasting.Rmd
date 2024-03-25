@@ -139,9 +139,9 @@ combined_bus_pv_od <- rbind(pv_bus_od_202312, pv_bus_od_202401, pv_bus_od_202402
   mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
   mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
 
-combined_train_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
+#combined_bus_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
   
-str(combined_train_pv_od)
+str(combined_bus_pv_od)
 ```
 
 ### BUSES - AR MODEL with AIC to choose lags
