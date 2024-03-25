@@ -12,7 +12,7 @@ library(dplyr)
 library(tidyr)
 
 # Read the dataset
-pv_train_od_202312 <- read_csv("../data/origin_destination_train_202312.csv")
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
 
 pv_train_od_202312 <- pv_train_od_202312 %>%
   mutate(Location = ifelse(ORIGIN_PT_CODE < DESTINATION_PT_CODE, ORIGIN_PT_CODE, DESTINATION_PT_CODE))
@@ -46,7 +46,8 @@ ggplot(grouped_data, aes(x = TIME_PER_HOUR, y = Total_Trips, color = as.factor(L
 ```{r}
 #time series, grp by weekends, weekdays (TRAIN)
 
-pv_train_od_202312 <- read_csv("../data/origin_destination_train_202312.csv")
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
+
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -85,7 +86,7 @@ ggplot(grouped_data, aes(x = TIME_PER_HOUR, y = Total_Trips, color = as.factor(L
 
 ```{r}
 
-pv_bus_od_202402 <- read.csv("../data/origin_destination_bus_202402.csv")
+pv_bus_od_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202402.csv")
 
 pv_bus_od_202402 <- pv_bus_od_202402 %>%
   mutate(Location = ifelse(ORIGIN_PT_CODE < DESTINATION_PT_CODE, ORIGIN_PT_CODE, DESTINATION_PT_CODE))
@@ -122,31 +123,29 @@ ggplot(grouped_databus1, aes(x = TIME_PER_HOUR, y = Total_Trips, color = as.fact
 ## Loading in data
 ```{r}
 # Passenger Volume for Buses - By Bus Stops (2023 Dec)
-pv_bus_202312 <- read.csv("../data/transport_node_bus_202312.csv")
+pv_bus_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202312.csv")
 
 # Passenger Volume for Buses - By Bus Stops (2024 Feb)
-pv_bus_202402 <- read.csv("../data/transport_node_bus_202402.csv")
+pv_bus_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202402.csv")
 
 # Passenger Volume for Buses - By Origin Destination Bus Stops (2023 Dec)
-pv_bus_od_202312 <- read.csv("../data/origin_destination_bus_202312.csv")
+pv_bus_od_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202312.csv")
 
 # Passenger Volume for Buses - By Origin Destination Bus Stops (2024 Feb)
-pv_bus_od_202402 <- read.csv("../data/origin_destination_bus_202402.csv")
-
-
+pv_bus_od_202402 <- read.csv("../PV Data [Buses and Trains]/Buses/By OD/origin_destination_bus_202402.csv")
 
 # Passenger Volume for Trains - By Train Stops (2023 Dec)
-pv_train_202312 <- read.csv("../data/transport_node_train_202312.csv")
+pv_train_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv")
 
 # Passenger Volume for Trains - By Train Stops (2024 Feb)
-pv_train_202402 <- read.csv("../data/transport_node_train_202402.csv")
+pv_train_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv")
 
 # Passenger Volume for Trains - By Origin Destination (2023 Dec)
 #pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
-pv_train_od_202312 <- read.csv("../data/origin_destination_train_202312.csv")
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
 
 # Passenger Volume for Trains - By Origin Destination (2024 Feb)
-pv_train_od_202402 <- read.csv("../data/origin_destination_train_202402.csv")
+pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
 
 # Geography of Island
 library(sf)
