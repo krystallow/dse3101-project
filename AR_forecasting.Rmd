@@ -105,7 +105,7 @@ fit_arima <- function(data, order, seasonal_dummy) {
 data <- combined_train_pv_od$TOTAL_TRIPS
 seasonal_dummy <- combined_train_pv_od$seasonal_dummy
 
-lags <- 5:10  # adjust and test, 5:10 takes damn long
+lags <- 5:10  # current best lag of 10
 
 aic_values <- numeric(length(lags))
 
