@@ -74,7 +74,7 @@ combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_o
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
   mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
   mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
-  mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
+  #mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
   #mutate(YEAR_MONTH_HOUR = as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")) %>%
   mutate(trip = as.factor(trip)) %>%
   mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
@@ -105,21 +105,25 @@ model <- keras_model_sequential()
 n_timesteps <- 3 ## number of time steps in sequence / length of time series
 n_features <- 3 ## number of predictors used in  model >> trips, seasonal_dummy, YEAR_MONTH_HOUR
 
-model %>%
+model %>% 
   layer_conv_1d(filters = 64, kernel_size = 3, activation = 'relu', input_shape = c(n_timesteps, n_features)) %>%
-  layer_lstm(units = 50, activation = 'tanh', return_sequences = TRUE) %>%
-  layer_flatten() %>%
-  layer_dense(units = 1)  # Output layer
+  layer_lstm(units = 50, activation = 'tanh', return_sequences = TRUE) %>% 
+  layer_flatten() %>% 
+  layer_dense(units = 1)  
 
-model %>% compile(optimizer = 'adam', loss = 'mean_squared_error')
+model %>% 
+  compile(optimizer = 'adam', loss = 'mean_squared_error') 
+
+combined_train_pv_od$seasonal_dummy <- as.numeric(combined_train_pv_od$seasonal_dummy)
 
 X_train <- combined_train_pv_od[, c("YEAR_MONTH_HOUR", "trip", "seasonal_dummy")] 
 X_train <- array(data = X_train, dim = c(nrow(X_train), n_timesteps, n_features)) 
 y_train <- combined_train_pv_od$TOTAL_TRIPS 
 
-# Train the model
-history <- model %>% fit(x = X_train, y = y_train, epochs = 50, batch_size = 32, validation_split = 0.2)
+str(combined_train_pv_od)
 
-# Make predictions for future time steps
-future_predictions <- model %>% predict(X_future)
+history <- model %>% 
+  fit(x = X_train, y = y_train, epochs = 50, batch_size = 32, validation_split = 0.2) 
 
+future_predictions <- model %>% 
+  predict(X_future) 
