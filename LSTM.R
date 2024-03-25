@@ -1,6 +1,7 @@
 
 library(tidyverse)
 library(stringr)
+#install.pakcages("keras", "tensorflow")
 library(keras)
 library(tensorflow)
 
@@ -81,6 +82,8 @@ combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_o
   mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
 
 combined_train_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
+combined_train_pv_od$seasonal_dummy <- as.integer(combined_train_pv_od$seasonal_dummy) - 1
+
 
 combined_bus_pv_od <- rbind(pv_bus_od_202312, pv_bus_od_202401, pv_bus_od_202402) %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
@@ -96,3 +99,72 @@ combined_bus_pv_od <- rbind(pv_bus_od_202312, pv_bus_od_202401, pv_bus_od_202402
 #combined_bus_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
 
 str(combined_bus_pv_od)
+
+model <- keras_model_sequential()
+
+# Assuming you have prepared your data as a sequence of images (X_train, y_train)
+
+# Define a custom ConvLSTM-like model
+library(keras)
+model <- keras_model_sequential()
+model %>%
+  layer_conv_1d(filters = 64, kernel_size = 3, activation = 'relu', input_shape = c(n_timesteps, n_channels)) %>%
+  layer_lstm(units = 50, activation = 'tanh', return_sequences = TRUE) %>%
+  layer_flatten() %>%
+  layer_dense(units = 1)  # Output layer
+
+model %>% compile(optimizer = 'adam', loss = 'mean_squared_error')
+
+# Train the model
+history <- model %>% fit(x = X_train, y = y_train, epochs = 50, batch_size = 32, validation_split = 0.2)
+
+# Make predictions for future time steps
+future_predictions <- model %>% predict(X_future)
+
+# Evaluate model performance
+# ...
+
+# Justify the choice of model based on performance metrics
+# ...
+
+# Adapt this code to your specific dataset and requirements
+
+
+
+x_train <- combined_train_pv_od %>%
+  filter()
+model %>%
+  layer_conv_1d(filters = 64, kernel_size = 2, activation = 'relu', 
+                input_shape = c(n_steps, n_features)) %>%
+  layer_max_pooling_1d(pool_size = 2) %>%
+  layer_flatten() %>%
+  layer_dense(units = 50, activation = 'relu') %>%
+  layer_dense(units = 1)  # Output layer
+
+# Compile the model
+model %>% compile(
+  optimizer = 'adam',
+  loss = 'mean_squared_error'  # Choose an appropriate loss function
+)
+
+# Train the model
+history <- model %>% fit(
+  x = train_x,  # Your input data (features)
+  y = train_y,  # Your target variable (total trips)
+  epochs = 50,  # Adjust as needed
+  batch_size = 32,  # Adjust as needed
+  validation_split = 0.2  # Split for validation
+)
+
+# Evaluate the model
+test_loss <- model %>% evaluate(x = test_x, y = test_y)
+cat("Test loss:", test_loss, "\n")
+
+# Make predictions
+predictions <- model %>% predict(test_x)
+
+# Justify the choice of model based on performance metrics
+# ...
+
+# Adapt this code to your specific dataset and requirements
+
