@@ -1,0 +1,31 @@
+---
+title: "SARIMA"
+author: "Eliza"
+date: "2024-03-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE)
+```
+
+### Load Packages
+```{r}
+library(sarima)
+library(tidyverse)
+library(lubridate)
+```
+
+## Restructuring Data
+```{r}
+# combine data from Dec 2023 - Feb 2024 of passenger volume for trains with origin destinations
+pv_train_od = rbind(pv_train_od_202312,pv_train_od_202401,pv_train_od_202402)
+
+# change class of date to Date
+pv_train_od = pv_train_od %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+
+pv_train_od$ds = pv_train_od$YEAR_MONTH
+# Combine date and hour
+pv_train_od$ds <- as.POSIXct(paste(pv_train_od$ds, pv_train_od$TIME_PER_HOUR), format = "%Y-%m-%d %H")
+```
