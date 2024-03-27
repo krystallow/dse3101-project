@@ -119,5 +119,14 @@ combined_train_pv_od$seasonal_dummy <- as.numeric(combined_train_pv_od$seasonal_
 
 X_train <- combined_train_pv_od[, c("YEAR_MONTH_HOUR", "trip", "seasonal_dummy")] 
 X_train <- array(data = X_train, dim = c(nrow(X_train), n_timesteps, n_features)) 
-y_train <- combined_train_pv_od$TOTAL_TRIPS 
+y_train <- combined_train_pv_od$TOTAL_TRIPS
+
+str(combined_train_pv_od)
+
+history <- model %>% 
+  fit(x = X_train, y = y_train, epochs = 50, batch_size = 32, validation_split = 0.2) 
+
+future_predictions <- model %>% 
+  predict(X_future) 
+
 
