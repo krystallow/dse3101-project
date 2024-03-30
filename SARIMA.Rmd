@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE,message = FALSE)
 library(sarima)
 library(tidyverse)
 library(lubridate)
+library(forecast)
 ```
 
 ## Restructuring Data
@@ -23,9 +24,21 @@ pv_train_od = rbind(pv_train_od_202312,pv_train_od_202401,pv_train_od_202402)
 
 # change class of date to Date
 pv_train_od = pv_train_od %>%
-  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-"))
 
 pv_train_od$ds = pv_train_od$YEAR_MONTH
 # Combine date and hour
 pv_train_od$ds <- as.POSIXct(paste(pv_train_od$ds, pv_train_od$TIME_PER_HOUR), format = "%Y-%m-%d %H")
+
+pv_train_od = pv_train_od %>%
+  select(-YEAR_MONTH) %>%
+  select(-TIME_PER_HOUR) %>%
+  select(-PT_TYPE)
+```
+
+```{r}
+ts_data <- ts(pv_train_od$TOTAL_TRIPS, frequency = 24) #change to time series with hourly seasonality
+# Fit the SARIMA model
+fit <- auto.arima(ts_data, seasonal = TRUE)
 ```
