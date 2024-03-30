@@ -108,7 +108,7 @@ n_features <- 3 ## number of predictors used in  model >> trips, seasonal_dummy,
 model <- keras_model_sequential() %>% 
   layer_conv_1d(filters = 64, kernel_size = 3, activation = 'relu', input_shape = c(n_timesteps, n_features)) %>%
   layer_lstm(units = 50, activation = 'tanh', return_sequences = TRUE) %>% 
-  layer_flatten() %>%
+  layer_flatten() %>% 
   layer_dense(units = 1) %>% 
   compile(optimizer = 'adam', loss = 'mean_squared_error')
 
@@ -144,16 +144,4 @@ model %>%
 # Print the model summary
 summary(model)
 
-
-library(keras)
-
-model <- keras_model_sequential()
-model %>%
-  layer_dense(units = 32, input_shape = c(784)) %>%
-  layer_activation('relu') %>%
-  layer_dense(units = 10) %>%
-  layer_activation('softmax')
-
-# Print a summary of the model's structure
-summary(model)
 
