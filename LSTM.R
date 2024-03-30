@@ -116,6 +116,7 @@ model <- keras_model_sequential() %>%
 # Print the model summary
 summary(model)
 
+str(combined_train_pv_od)
 combined_train_pv_od$seasonal_dummy <- as.numeric(combined_train_pv_od$seasonal_dummy)
 
 X_train <- combined_train_pv_od[, c("YEAR_MONTH_HOUR", "trip", "seasonal_dummy")] 
