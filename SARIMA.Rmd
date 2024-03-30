@@ -11,7 +11,6 @@ knitr::opts_chunk$set(echo = TRUE,message = FALSE)
 
 ### Load Packages
 ```{r}
-library(sarima)
 library(tidyverse)
 library(lubridate)
 library(forecast)
@@ -21,12 +20,18 @@ library(forecast)
 ```{r}
 # Passenger Volume for Trains - By Origin Destination (2023 Dec)
 pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
+pv_train_od_202312 = pv_train_od_202312 %>%
+  mutate(month = substring(YEAR_MONTH,6,7))
 
 # Passenger Volume for Trains - By Origin Destination (2024 Jan)
 pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv")
+pv_train_od_202401 = pv_train_od_202401 %>%
+  mutate(month = substring(YEAR_MONTH,6,7))
 
 # Passenger Volume for Trains - By Origin Destination (2024 Feb)
 pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
+pv_train_od_202402 = pv_train_od_202402 %>%
+  mutate(month = substring(YEAR_MONTH,6,7))
 
 
 # combine data from Dec 2023 - Feb 2024 of passenger volume for trains with origin destinations
@@ -44,7 +49,9 @@ pv_train_od$ds <- as.POSIXct(paste(pv_train_od$ds, pv_train_od$TIME_PER_HOUR), f
 pv_train_od = pv_train_od %>%
   select(-YEAR_MONTH) %>%
   select(-TIME_PER_HOUR) %>%
-  select(-PT_TYPE)
+  select(-PT_TYPE) %>%
+  select(-ORIGIN_PT_CODE) %>%
+  select(-DESTINATION_PT_CODE)
 ```
 
 ```{r}
