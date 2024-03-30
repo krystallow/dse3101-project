@@ -83,7 +83,7 @@ combined_train_pv_od$YEAR_MONTH_HOUR = as.POSIXct(paste(combined_train_pv_od$YEA
 
 # Convert to LSTM suitable classes
 combined_train_pv_od <- combined_train_pv_od %>%
-  mutate(seasonal_dummy = as.integer(seasonal_dummy))
+  mutate(seasonal_dummy = as.integer(seasonal_dummy)-1)
 
 str(combined_train_pv_od)
 
@@ -133,17 +133,24 @@ future_predictions <- model %>%
 
 
 
-model <- keras_model_sequential()
-
-# Assuming n_timesteps = 3 and n_features = 3
-model %>%
+model <- keras_model_sequential() %>%
   layer_conv_1d(filters = 64, kernel_size = 3, activation = 'relu', input_shape = c(n_timesteps, n_features)) %>%
   layer_lstm(units = 50, activation = 'tanh', return_sequences = TRUE) %>%
   layer_flatten() %>%
   layer_dense(units = 1) %>%
   compile(optimizer = 'adam', loss = 'mean_squared_error')
 
-# Print the model summary
 summary(model)
 
+# Prepare input features and target
+X_train <- combined_train_pv_od[, c("YEAR_MONTH_HOUR", "trip", "seasonal_dummy")]
+#X_train <- array(data = X_train, dim = c(nrow(X_train), n_timesteps, n_features))
+str(X_train)
+y_train <- combined_train_pv_od$TOTAL_TRIPS
+
+
+
+# Train the model
+history <- model %>%
+  fit(x = X_train, y = y_train, epochs = 50, batch_size = 32, validation_split = 0.2)
 
