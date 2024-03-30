@@ -16,9 +16,19 @@ library(tidyverse)
 library(lubridate)
 library(forecast)
 ```
-
+# TRAIN
 ## Restructuring Data
 ```{r}
+# Passenger Volume for Trains - By Origin Destination (2023 Dec)
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
+
+# Passenger Volume for Trains - By Origin Destination (2024 Jan)
+pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv")
+
+# Passenger Volume for Trains - By Origin Destination (2024 Feb)
+pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
+
+
 # combine data from Dec 2023 - Feb 2024 of passenger volume for trains with origin destinations
 pv_train_od = rbind(pv_train_od_202312,pv_train_od_202401,pv_train_od_202402)
 
