@@ -81,76 +81,70 @@ combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_o
 combined_train_pv_od$YEAR_MONTH_HOUR = combined_train_pv_od$YEAR_MONTH
 combined_train_pv_od$YEAR_MONTH_HOUR = as.POSIXct(paste(combined_train_pv_od$YEAR_MONTH_HOUR, combined_train_pv_od$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
 
-# Convert to LSTM suitable classes
-combined_train_pv_od <- combined_train_pv_od %>%
-  mutate(seasonal_dummy = as.integer(seasonal_dummy)-1)
-
-str(combined_train_pv_od)
-
-
-combined_bus_pv_od <- rbind(pv_bus_od_202312, pv_bus_od_202401, pv_bus_od_202402) %>%
-  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
-  mutate(trip = as.factor(trip)) %>%
-  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
-  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
-  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
-  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
-
-combined_bus_pv_od$YEAR_MONTH_HOUR = combined_bus_pv_od$YEAR_MONTH
-combined_bus_pv_od$YEAR_MONTH_HOUR = as.POSIXct(paste(combined_bus_pv_od$YEAR_MONTH_HOUR, combined_bus_pv_od$TIME_PER_HOUR), format = "%Y-%m-%d %H")
-
-str(combined_bus_pv_od)
-
-model <- keras_model_sequential()
-
-n_timesteps <- 3 ## number of time steps in sequence / length of time series
-n_features <- 3 ## number of predictors used in  model >> trips, seasonal_dummy, YEAR_MONTH_HOUR
-
-model <- keras_model_sequential() %>% 
-  layer_conv_1d(filters = 64, kernel_size = 3, activation = 'relu', input_shape = c(n_timesteps, n_features)) %>%
-  layer_lstm(units = 50, activation = 'tanh', return_sequences = TRUE) %>% 
-  layer_flatten() %>% 
-  layer_dense(units = 1) %>% 
-  compile(optimizer = 'adam', loss = 'mean_squared_error')
-
-# Print the model summary
-summary(model)
-
-str(combined_train_pv_od)
+combined_train_pv_od$Year <- as.numeric(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%Y"))
+combined_train_pv_od$Month <- as.numeric(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%m"))
+combined_train_pv_od$Hour <- as.numeric(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%H"))
+combined_train_pv_od$trip_numeric <- as.numeric(as.factor(combined_train_pv_od$trip))
 combined_train_pv_od$seasonal_dummy <- as.numeric(combined_train_pv_od$seasonal_dummy)
 
-X_train <- combined_train_pv_od[, c("YEAR_MONTH_HOUR", "trip", "seasonal_dummy")] 
-X_train <- array(data = X_train, dim = c(nrow(X_train), n_timesteps, n_features)) 
-y_train <- combined_train_pv_od$TOTAL_TRIPS
-
 str(combined_train_pv_od)
 
-history <- model %>% 
-  fit(x = X_train, y = y_train, epochs = 50, batch_size = 32, validation_split = 0.2) 
+# Prepare input features and target variable
+X <- combined_train_pv_od[, c("Year", "Month", "Hour", "seasonal_dummy", "trip_numeric")]
+y <- combined_train_pv_od$TOTAL_TRIPS
 
-future_predictions <- model %>% 
-  predict(X_future) 
+# Normalize features (optional but recommended)
+X <- scale(X)
+str(X)
+str(y)
 
+# Split data into training and validation sets
+train_size <- 0.8
+train_samples <- floor(train_size * nrow(X))
+X_train <- X[1:train_samples, , drop = FALSE]
+y_train <- y[1:train_samples]
+X_val <- X[(train_samples + 1):nrow(X), , drop = FALSE]
+y_val <- y[(train_samples + 1):nrow(X)]
 
-
-model <- keras_model_sequential() %>%
-  layer_conv_1d(filters = 64, kernel_size = 3, activation = 'relu', input_shape = c(n_timesteps, n_features)) %>%
-  layer_lstm(units = 50, activation = 'tanh', return_sequences = TRUE) %>%
+# Create ConvLSTM model
+model <- keras_model_sequential()
+model %>%
+  layer_conv_1d(filters = 32, kernel_size = 3, activation = "relu", input_shape = c(5, 1)) %>%
   layer_flatten() %>%
-  layer_dense(units = 1) %>%
-  compile(optimizer = 'adam', loss = 'mean_squared_error')
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 1)
+
+# Compile the model
+model %>%
+  compile(optimizer = "adam", loss = "mean_squared_error")
 
 summary(model)
 
-# Prepare input features and target
-X_train <- combined_train_pv_od[, c("YEAR_MONTH_HOUR", "trip", "seasonal_dummy")]
-#X_train <- array(data = X_train, dim = c(nrow(X_train), n_timesteps, n_features))
-str(X_train)
-y_train <- combined_train_pv_od$TOTAL_TRIPS
+# Train the model using training data
+history <- model %>% fit(
+  x = X_train,
+  y = y_train,
+  epochs = 50, #single pass through entire dataset during model training > determines how many times the model will see the entire dataset
+  batch_size = 32, #number of data points processed tgt in each iteration > common sizes: 32,64,128
+  validation_data = list(X_val, y_val),
+  verbose = 1
+)
+
+history <- model %>% fit(
+  x = array_reshape(X_train, c(dim(X_train)[1], dim(X_train)[2], 1)),
+  y = y_train,
+  epochs = 50,
+  batch_size = 32,
+  validation_data = list(array_reshape(X_val, c(dim(X_val)[1], dim(X_val)[2], 1)), y_val),
+  verbose = 1
+)
+
+# Evaluate the model (use test data if available)
+val_loss <- history$metrics$val_loss[length(history$metrics$val_loss)]
+cat("Validation Loss:", val_loss, "\n")
+
+# Make predictions
+y_pred <- model %>% predict(X_val)
 
 
-
-# Train the model
-history <- model %>%
-  fit(x = X_train, y = y_train, epochs = 50, batch_size = 32, validation_split = 0.2)
 
