@@ -1,7 +1,7 @@
 
 library(tidyverse)
 library(stringr)
-#install.pakcages("keras", "tensorflow")
+#install.packages("keras", "tensorflow")
 library(keras)
 library(tensorflow)
 
