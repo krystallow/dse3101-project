@@ -72,31 +72,32 @@ pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
 
 combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_od_202402) %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
-  #mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
-  mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
-  #mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
-  #mutate(YEAR_MONTH_HOUR = as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")) %>%
-  #mutate(trip = as.factor(trip)) %>%
-  #mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
   mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
-  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+  
+combined_train_pv_od$YEAR_MONTH_HOUR = combined_train_pv_od$YEAR_MONTH
+combined_train_pv_od$YEAR_MONTH_HOUR = as.POSIXct(paste(combined_train_pv_od$YEAR_MONTH_HOUR, combined_train_pv_od$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
 
-#combined_train_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
-combined_train_pv_od$seasonal_dummy <- as.integer(combined_train_pv_od$seasonal_dummy) - 1
+# Convert to LSTM suitable classes
+combined_train_pv_od <- combined_train_pv_od %>%
+  mutate(seasonal_dummy = as.integer(seasonal_dummy))
+
+str(combined_train_pv_od)
 
 
 combined_bus_pv_od <- rbind(pv_bus_od_202312, pv_bus_od_202401, pv_bus_od_202402) %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
-  #mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
-  mutate(YEAR_MONTH_HOUR = str_c(YEAR_MONTH, TIME_PER_HOUR, sep = "-")) %>%
-  #mutate(YEAR_MONTH_HOUR = as.Date(ymd_h(YEAR_MONTH_HOUR))) %>%
-  #mutate(YEAR_MONTH_HOUR = as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")) %>%
-  #mutate(trip = as.factor(trip)) %>%
-  #mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
   mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
-  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE))
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
 
-#combined_bus_pv_od$YEAR_MONTH_HOUR <- as.POSIXct(combined_train_pv_od$YEAR_MONTH_HOUR, format = "%Y-%m-%d %H")
+combined_bus_pv_od$YEAR_MONTH_HOUR = combined_bus_pv_od$YEAR_MONTH
+combined_bus_pv_od$YEAR_MONTH_HOUR = as.POSIXct(paste(combined_bus_pv_od$YEAR_MONTH_HOUR, combined_bus_pv_od$TIME_PER_HOUR), format = "%Y-%m-%d %H")
 
 str(combined_bus_pv_od)
 

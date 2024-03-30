@@ -84,7 +84,7 @@ combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_o
   mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
   mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
   mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
-  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>% 
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
   
 combined_train_pv_od$YEAR_MONTH_HOUR = combined_train_pv_od$YEAR_MONTH
 combined_train_pv_od$YEAR_MONTH_HOUR = as.POSIXct(paste(combined_train_pv_od$YEAR_MONTH_HOUR, combined_train_pv_od$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
