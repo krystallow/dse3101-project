@@ -110,7 +110,7 @@ y_val <- y[(train_samples + 1):nrow(X)]
 model <- keras_model_sequential()
 model %>%
   layer_conv_1d(filters = 32, kernel_size = 3, activation = "relu", input_shape = c(5, 1)) %>%
-  layer_flatten() %>%
+  #layer_flatten() %>%
   layer_dense(units = 64, activation = "relu") %>%
   layer_dense(units = 1)
 
@@ -127,15 +127,6 @@ history <- model %>% fit(
   epochs = 50, #single pass through entire dataset during model training > determines how many times the model will see the entire dataset
   batch_size = 32, #number of data points processed tgt in each iteration > common sizes: 32,64,128
   validation_data = list(X_val, y_val),
-  verbose = 1
-)
-
-history <- model %>% fit(
-  x = array_reshape(X_train, c(dim(X_train)[1], dim(X_train)[2], 1)),
-  y = y_train,
-  epochs = 50,
-  batch_size = 32,
-  validation_data = list(array_reshape(X_val, c(dim(X_val)[1], dim(X_val)[2], 1)), y_val),
   verbose = 1
 )
 
