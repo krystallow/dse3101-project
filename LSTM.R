@@ -106,6 +106,33 @@ y_train <- y[1:train_samples]
 X_val <- X[(train_samples + 1):nrow(X), , drop = FALSE]
 y_val <- y[(train_samples + 1):nrow(X)]
 
+
+# Create LSTM model (TRY THIS - ELIZA!!!!!!)
+model <- keras_model_sequential()
+model %>%
+  layer_lstm(units = 50, return_sequences = TRUE, input_shape = c(5, 1)) %>%
+  layer_lstm(units = 50) %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 1)
+
+# Compile the model
+model %>%
+  compile(optimizer = "adam", loss = "mean_squared_error")
+
+summary(model)
+
+# Train the model using training data
+history <- model %>% fit(
+  x = array_reshape(X_train, c(dim(X_train)[1], dim(X_train)[2], 1)),
+  y = y_train,
+  epochs = 50,
+  batch_size =32,
+  validation_data=list(array_reshape(X_val,c(dim(X_val)[1],dim(X_val)[2],1)),y_val),
+  verbose=1
+)
+
+## UNTIL HERE -ELIZA!!
+
 # Create ConvLSTM model
 model <- keras_model_sequential()
 model %>%
