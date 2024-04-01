@@ -98,6 +98,8 @@ print(paste("Root Mean Squared Error: ", rmse))
 prophet_plot_components(m, forecast)
 
 
+write.csv(forecase, file = "prophet_forecasts.csv")
+
 
 # Make valid names for the column names
 #names(pv_train_od) <- make.names(names(pv_train_od), unique = TRUE)
