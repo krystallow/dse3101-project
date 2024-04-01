@@ -384,3 +384,4 @@ ggplot() +
                                   Plan 2019") +
   geom_sf(data = shape_bus, aes(geometry = geometry), color = "darkblue")
 
+
