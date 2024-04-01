@@ -68,7 +68,7 @@ fit <- auto.arima(ts_data, seasonal = TRUE)
 ## Testing 
 ```{r}
 # Generate forecasts
-forecasts <- forecast(fit, h = length(testing$TOTAL_TRIPS))
+forecasts <- forecast(fit, h = 804012)
 
 # Compare forecasts to actual test data
 test_results <- data.frame(
