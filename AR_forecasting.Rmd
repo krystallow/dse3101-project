@@ -76,8 +76,8 @@ pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
 ```
 
 ```{r}
-# Merge all Train By OD Passenger Volume data for Dec 2023, Jan 2024 and Feb 2023
-combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_od_202402) %>%
+# Merge all Train By OD Passenger Volume data for Dec 2023 and Jan 2024 
+combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401) %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
   mutate(trip = as.factor(trip)) %>%
   mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
@@ -93,6 +93,23 @@ combined_train_pv_od$Hour <- as.integer(format(combined_train_pv_od$YEAR_MONTH_H
 combined_train_pv_od$trip_numeric <- as.numeric(as.factor(combined_train_pv_od$trip))
 
 str(combined_train_pv_od)
+
+
+### Testing Data > Feb 2024
+pv_train_od_202402 <- pv_train_od_202402 %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+  
+pv_train_od_202402$YEAR_MONTH_HOUR = pv_train_od_202402$YEAR_MONTH
+pv_train_od_202402$YEAR_MONTH_HOUR = as.POSIXct(paste(pv_train_od_202402$YEAR_MONTH_HOUR, pv_train_od_202402$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
+pv_train_od_202402$Year <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%Y"))
+pv_train_od_202402$Month <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%m"))
+pv_train_od_202402$Hour <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%H"))
+pv_train_od_202402$trip_numeric <- as.numeric(as.factor(pv_train_od_202402$trip))
 ```
 
 
@@ -101,15 +118,31 @@ data <- combined_train_pv_od$TOTAL_TRIPS
 
 X <- data.frame(
   Year = as.numeric(combined_train_pv_od$Year),
-  Month = as.numeric(combined_train_pv_od$Month),
-  Hour = as.numeric(combined_train_pv_od$Hour),
-  seasonal_dummy = as.numeric(combined_train_pv_od$seasonal_dummy),
+  Month = as.integer(combined_train_pv_od$Month),
+  Hour = as.integer(combined_train_pv_od$Hour),
+  seasonal_dummy = as.integer(combined_train_pv_od$seasonal_dummy),
   trip_numeric = as.numeric(combined_train_pv_od$trip_numeric)
 )
+
+str(X)
 
 X_matrix <- as.matrix(X[, c("Year", "Month", "Hour", "seasonal_dummy", "trip_numeric")])
 
 ar_model <- auto.arima(data, xreg = X_matrix)
 
 summary(ar_model)
+
+test_data <- data.frame(
+  Year = as.numeric(pv_train_od_202402$Year),
+  Month = as.integer(pv_train_od_202402$Month),
+  Hour = as.integer(pv_train_od_202402$Hour),
+  seasonal_dummy = as.integer(pv_train_od_202402$seasonal_dummy),
+  trip_numeric = as.numeric(pv_train_od_202402$trip_numeric)
+)
+
+X_matrix_test <- as.matrix(test_data[, c("Year", "Month", "Hour", "seasonal_dummy", "trip_numeric")])
+
+forecast_result <- forecast(ar_model, xreg = X_matrix_test)
+
+forecasted_values <- forecast_result$mean
 ```
