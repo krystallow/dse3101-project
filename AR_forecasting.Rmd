@@ -9,6 +9,7 @@ output: html_document
 library(tidyverse)
 library(stringr)
 library(forecast)
+library(ggplot2)
 ```
 
 ### Load in PV Data with Day Type Dummy - WEEKEND/HOLIDAY or WEEKDAY
@@ -145,4 +146,20 @@ X_matrix_test <- as.matrix(test_data[, c("Year", "Month", "Hour", "seasonal_dumm
 forecast_result <- forecast(ar_model, xreg = X_matrix_test)
 
 forecasted_values <- forecast_result$mean
+```
+
+```{r}
+actual_data <- pv_train_od_202402$TOTAL_TRIPS
+
+forecasted_values <- forecast_result$mean
+
+mae <- mean(abs(forecasted_values - actual_data))
+
+rmse <- sqrt(mean((forecasted_values - actual_data)^2))
+
+# compare forecasts with actual TOTAL_TRIPS
+comparison_df <- data.frame(
+  Actual = actual_data,
+  Forecasted = forecasted_values
+)
 ```
