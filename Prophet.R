@@ -3,6 +3,7 @@ library(tidyverse)
 library(lubridate)
 library(prophet)
 
+
 # Passenger Volume for Trains - By Origin Destination (2023 Dec)
 pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
 #pv_train_od_202312 = pv_train_od_202312 %>%
@@ -52,6 +53,7 @@ testing$DAY_TYPE <- as.numeric(factor(testing$DAY_TYPE))
 
 
 pv_train_od = pv_train_od %>%
+  arrange(trip,TIME_PER_HOUR) %>%
   select(-PT_TYPE) %>%
   select(-TOTAL_TRIPS) %>%
   select(-YEAR_MONTH) %>%
@@ -59,6 +61,7 @@ pv_train_od = pv_train_od %>%
   select(-DESTINATION_PT_CODE)
 
 testing = testing %>%
+  arrange(trip,TIME_PER_HOUR) %>%
   select(-PT_TYPE) %>%
   select(-TOTAL_TRIPS) %>%
   select(-YEAR_MONTH) %>%
@@ -69,11 +72,10 @@ testing = testing %>%
 m <- prophet()
 
 # Add hourly seasonality
-m <- add_seasonality(m, name='hourly', period=24, fourier.order=3)
+m <- add_seasonality(m, name='hourly', period=20, fourier.order=3)
 
 
 # Add additional regressors
-#m <- add_regressor(m, 'month')
 m <- add_regressor(m, 'DAY_TYPE')
 m <- add_regressor(m, 'trip')
 
@@ -83,7 +85,6 @@ m <- fit.prophet(m, pv_train_od)
 
 # Create future dataframe
 future <- data.frame(ds = testing$ds)
-
 future$DAY_TYPE <- testing$DAY_TYPE
 future$trip <- testing$trip
 
@@ -97,62 +98,94 @@ print(paste("Root Mean Squared Error: ", rmse))
 # Plot the forecast
 prophet_plot_components(m, forecast)
 
-
-write.csv(forecase, file = "prophet_forecasts.csv")
-
-
-# Make valid names for the column names
-#names(pv_train_od) <- make.names(names(pv_train_od), unique = TRUE)
-#names(origin_destination_dummies) <- make.names(names(origin_destination_dummies), unique = TRUE)
-#names(final_destination_dummies) <- make.names(names(final_destination_dummies), unique = TRUE)
+#write_xlsx(forecast, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_prophet.xlsx")
 
 
 
-# Now you can add the dummy variables as extra regressors
-#dummy_cols <- colnames(origin_destination_dummies)
-#for (col in dummy_cols) {
-  #model <- add_regressor(model, col)
-#}
+# =========== failed run ===============
+testing <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv")
+node_202401 = read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv")
+node_202312 = read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv")
 
-
-# Fit the model
-#model <- fit.prophet(model, pv_train_od)
-
-#future <- make_future_dataframe(model, periods = 365)
-#future$is_weekday <- ifelse(future$DAY_TYPE == 'WEEKDAY', 1, 0)
-#forecast = predict(model,future)
-
-# Bus Data
-
-#pv_bus_od = rbind(pv_bus_od_202312,pv_bus_od_202401,pv_bus_od_202402)
+training = rbind(node_202312,node_202401)
 
 # change class of date to Date
-#pv_bus_od = pv_bus_od %>%
-#  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+training = training %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) 
 
-#pv_bus_od$ds = pv_bus_od$YEAR_MONTH
+testing = testing %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+
+training$ds = training$YEAR_MONTH
+testing$ds = testing$YEAR_MONTH
+
 # Combine date and hour
-#pv_bus_od$ds <- as.POSIXct(paste(pv_bus_od$ds, pv_bus_od$TIME_PER_HOUR), format = "%Y-%m-%d %H")
+training$ds <- as.POSIXct(paste(training$ds, training$TIME_PER_HOUR), format = "%Y-%m-%d %H")
+testing$ds = as.POSIXct(paste(testing$ds, testing$TIME_PER_HOUR), format = "%Y-%m-%d %H")
 
-#converting everything to numeric for Prophet
-#pv_bus_od$y = pv_bus_od$TOTAL_TRIPS
-#pv_bus_od$ORIGIN_PT_CODE <- as.numeric(factor(pv_bus_od$ORIGIN_PT_CODE))
-#pv_bus_od$DESTINATION_PT_CODE <- as.numeric(factor(pv_bus_od$DESTINATION_PT_CODE))
-#pv_bus_od$DAY_TYPE <- as.numeric(factor(pv_bus_od$DAY_TYPE))
+training_weekday = training %>%
+  select(-PT_TYPE) %>%
+  select(-YEAR_MONTH) %>%
+  select(-TOTAL_TAP_OUT_VOLUME) %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  select(-DAY_TYPE) %>%
+  rename(y = TOTAL_TAP_IN_VOLUME) %>%
+  arrange(PT_CODE,TIME_PER_HOUR) %>%
+  mutate(PT_CODE = as.numeric(factor(PT_CODE)))%>%
+  select(-TIME_PER_HOUR)
 
+testing_weekday = testing %>%
+  select(-PT_TYPE) %>%
+  select(-YEAR_MONTH) %>%
+  select(-TOTAL_TAP_OUT_VOLUME) %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  select(-DAY_TYPE) %>%
+  arrange(PT_CODE,TIME_PER_HOUR) %>%
+  rename(y = TOTAL_TAP_IN_VOLUME) %>%
+  mutate(PT_CODE = as.numeric(factor(PT_CODE)))%>%
+  select(-TIME_PER_HOUR)
 
-#pv_bus_od = pv_bus_od %>%
-#  select(-PT_TYPE) %>%
-#  select(-TOTAL_TRIPS) %>%
-#  select(-YEAR_MONTH)
+testing_weekend = testing %>%
+  select(-PT_TYPE) %>%
+  select(-YEAR_MONTH) %>%
+  select(-TOTAL_TAP_OUT_VOLUME) %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  select(-DAY_TYPE) %>%
+  arrange(PT_CODE,TIME_PER_HOUR) %>%
+  rename(y = TOTAL_TAP_IN_VOLUME) %>%
+  mutate(PT_CODE = as.numeric(factor(PT_CODE)))%>%
+  select(-TIME_PER_HOUR)
+
+training_weekend = training %>%
+  select(-PT_TYPE) %>%
+  select(-YEAR_MONTH) %>%
+  select(-TOTAL_TAP_OUT_VOLUME) %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  select(-DAY_TYPE) %>%
+  arrange(PT_CODE,TIME_PER_HOUR) %>%
+  rename(y = TOTAL_TAP_IN_VOLUME) %>%
+  mutate(PT_CODE = as.numeric(factor(PT_CODE)))%>%
+  select(-TIME_PER_HOUR)
 
 # Initialize model
-#m_bus <- prophet()
-
+m_weekday <- prophet()
+m_weekday <- add_seasonality(m_weekday, name='hourly', period=20, fourier.order=3)
 # Add additional regressors
-#m_bus <- add_regressor(m_bus, 'DAY_TYPE')
-#m_bus <- add_regressor(m_bus, 'TIME_PER_HOUR')
-#m_bus <- add_regressor(m_bus, 'ORIGIN_PT_CODE')
-#m_bus <- add_regressor(m_bus, 'DESTINATION_PT_CODE')
+m_weekday <- add_regressor(m_weekday, 'PT_CODE')
 # Fit the model
-#m_bus <- fit.prophet(m_bus, pv_bus_od)
+m_weekday <- fit.prophet(m_weekday, training_weekday)
+
+
+# Create future dataframe
+future_weekday <- data.frame(ds_weekday = testing_weekday$ds)
+future_weekday$PT_CODE <- testing_weekday$PT_CODE
+
+# Predict
+forecast <- predict(m_weekday, future_weekday)
+
+# Calculate RMSE
+rmse <- sqrt(mean((testing_weekday$y - forecast$yhat)^2))
+print(paste("Root Mean Squared Error: ", rmse))
+
+
+

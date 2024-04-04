@@ -16,6 +16,93 @@ library(lubridate)
 library(forecast)
 ```
 # TRAIN
+
+## redo
+```{r}
+testing <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv")
+node_202401 = read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv")
+node_202312 = read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv")
+
+training = rbind(node_202312,node_202401)
+
+training_weekday = training %>%
+  select(-PT_TYPE) %>%
+  select(-YEAR_MONTH) %>%
+  select(-TOTAL_TAP_OUT_VOLUME) %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  select(-DAY_TYPE) %>%
+  rename(y = TOTAL_TAP_IN_VOLUME) %>%
+  arrange(PT_CODE,TIME_PER_HOUR) %>%
+  mutate(PT_CODE = as.numeric(factor(PT_CODE)))
+
+testing_weekday = testing %>%
+  select(-PT_TYPE) %>%
+  select(-YEAR_MONTH) %>%
+  select(-TOTAL_TAP_OUT_VOLUME) %>%
+  filter(DAY_TYPE == "WEEKDAY") %>%
+  select(-DAY_TYPE) %>%
+  arrange(PT_CODE,TIME_PER_HOUR) %>%
+  rename(y = TOTAL_TAP_IN_VOLUME) %>%
+  mutate(PT_CODE = as.numeric(factor(PT_CODE)))
+
+testing_weekend = testing %>%
+  select(-PT_TYPE) %>%
+  select(-YEAR_MONTH) %>%
+  select(-TOTAL_TAP_OUT_VOLUME) %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  select(-DAY_TYPE) %>%
+  arrange(PT_CODE,TIME_PER_HOUR) %>%
+  rename(y = TOTAL_TAP_IN_VOLUME) %>%
+  mutate(PT_CODE = as.numeric(factor(PT_CODE)))
+
+training_weekend = training %>%
+  select(-PT_TYPE) %>%
+  select(-YEAR_MONTH) %>%
+  select(-TOTAL_TAP_OUT_VOLUME) %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") %>%
+  select(-DAY_TYPE) %>%
+  arrange(PT_CODE,TIME_PER_HOUR) %>%
+  rename(y = TOTAL_TAP_IN_VOLUME) %>%
+  mutate(PT_CODE = as.numeric(factor(PT_CODE)))
+```
+
+```{r}
+ts_data_weekday <- ts(training_weekday$y, frequency = 20) #change to time series with hourly seasonality
+# Fit the SARIMA model
+# Define your additional regressors
+additional_regressors <- training_weekday$PT_CODE
+
+future_regressors <- testing_weekday$PT_CODE
+
+fit <- auto.arima(ts_data_weekday, seasonal = TRUE)
+print(fit) #ARIMA (2,1,0)(1,0,0)
+
+# Fit the model with additional regressors
+#fit <- Arima(ts_data_weekday, order=c(2,1,0), seasonal=c(1,0,0), xreg=additional_regressors)
+```
+
+## Testing 
+```{r}
+# Generate forecasts
+forecasts_weekday <- forecast(fit, xreg=future_regressors,h = 3410)
+
+# Compare forecasts to actual test data
+test_results <- data.frame(
+  Actual = testing_weekday$y,
+  Predicted = forecasts_weekday$mean
+)
+
+# Calculate error metrics
+RMSE <- sqrt(mean((test_results$Actual - test_results$Predicted)^2))
+
+print(paste("Root Mean Squared Error: ", RMSE))
+```
+
+
+
+
+
+# v1
 ## Restructuring Data
 ```{r}
 # Passenger Volume for Trains - By Origin Destination (2023 Dec)
@@ -69,13 +156,14 @@ pv_train_od = pv_train_od %>%
   select(-TIME_PER_HOUR) %>%
   select(-PT_TYPE) %>%
   select(-ORIGIN_PT_CODE) %>%
-  select(-DESTINATION_PT_CODE)
+  select(-DESTINATION_PT_CODE) %>%
+  arrange(ds,trip)
 
 
 ```
 
 ```{r}
-ts_data <- ts(pv_train_od$TOTAL_TRIPS, frequency = 24) #change to time series with hourly seasonality
+ts_data <- ts(pv_train_od$TOTAL_TRIPS, frequency = 20) #change to time series with hourly seasonality
 # Fit the SARIMA model
 # Define your additional regressors
 additional_regressors <- cbind(pv_train_od$DAY_TYPE, pv_train_od$trip)
