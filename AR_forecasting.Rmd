@@ -51,6 +51,7 @@ pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
 ```
 
 ```{r}
+## By Station
 training_weekend <- rbind(pv_train_202312_weekend, pv_train_202401_weekend) %>%
   select(-DAY_TYPE, -PT_TYPE, -TOTAL_TAP_OUT_VOLUME) %>%
   mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-"))) %>%
@@ -126,6 +127,7 @@ pv_train_od_202402$trip_numeric <- as.numeric(as.factor(pv_train_od_202402$trip)
 
 
 ```{r}
+## By Station
 new_data <- training_weekend$y
 
 new_X <- data.frame(
@@ -196,7 +198,6 @@ X <- data.frame(
 
 str(X)
 
-
 X_matrix <- as.matrix(X[, c("Year", "Month", "Hour", "seasonal_dummy", "trip_numeric")])
 
 ar_model <- auto.arima(data, xreg = X_matrix)
@@ -221,6 +222,7 @@ forecasted_values <- forecast_result$mean
 
 ```{r}
 actual_data <- pv_train_od_202402$TOTAL_TRIPS
+actual_data <- pv_train_od_202402
 
 forecasted_values <- forecast_result$mean
 
@@ -230,13 +232,33 @@ rmse <- sqrt(mean((forecasted_values - actual_data)^2))
 
 # compare forecasts with actual TOTAL_TRIPS
 comparison_df <- data.frame(
-  Actual = actual_data,
+  Trip = actual_data$trip, 
+  Actual = actual_data$TOTAL_TRIPS,
   Forecasted = forecasted_values
 )
 ```
 
 
+
 ```{r}
+### new
+training <- combined_train_pv_od %>%
+  select(trip, trip_numeric, YEAR_MONTH_HOUR, seasonal_dummy, TOTAL_TRIPS, Year, Month,Hour) %>%
+  arrange(trip, Year, Month, Hour)
+
+X <- data.frame( 
+  #Year = as.numeric(training$Year),
+  #Month = as.integer(training$Month),
+  Hour = as.integer(training$Hour),
+  #seasonal_dummy = as.integer(training$seasonal_dummy),
+  trip_numeric = as.numeric(training$trip_numeric)
+  )
+
+X_matrix <- as.matrix(X[, c("Hour", "trip_numeric")])
+```
+
+```{r}
+## new
 fit_arima <- function(data, order, xreg) {
   ar_model <- Arima(data, order = c(order, 0, 0), xreg = X_matrix)
   return(AIC(ar_model))
@@ -244,7 +266,7 @@ fit_arima <- function(data, order, xreg) {
 
 data <- combined_train_pv_od$TOTAL_TRIPS
 
-lags <- 10:15  # current best lag of 10
+lags <- 1:10  # current best lag of 10
 
 aic_values <- numeric(length(lags))
 
@@ -256,42 +278,46 @@ for (i in seq_along(lags)) {
 best_lag <- lags[which.min(aic_values)]
 
 # order parameter specifies order(number of lags, order of difference, number of moving average components) - set to 0 for standard AR >> change accordingly 
+library(data.table)
+data_dt <- as.data.table(data)
+ar_model <- Arima(data, order = c(best_lag, 0, 0), xreg = X_matrix, method = "CSS", optim.method = "BFGS")
 
-ar_model <- Arima(data, order = c(best_lag, 0, 0), xreg = X_matrix)
+
+ar_model <- Arima(data, order = c(2, 0, 0), xreg = X_matrix)
 summary(ar_model)
 
-forecast_result <- forecast(ar_model)
+test_data <- data.frame(
+  #Year = as.numeric(pv_train_od_202402$Year),
+  #Month = as.integer(pv_train_od_202402$Month),
+  Hour = as.integer(pv_train_od_202402$Hour),
+  #seasonal_dummy = as.integer(pv_train_od_202402$seasonal_dummy),
+  trip_numeric = as.numeric(pv_train_od_202402$trip_numeric)
+)
 
-print(forecast_result)
+X_matrix_test <- as.matrix(test_data[, c("Hour", "trip_numeric")])
 
+forecast_result <- forecast(ar_model, xreg = X_matrix_test)
 
-
-
-# Define a range of lags to explore
-lags <- 15:20
-
-# Initialize a vector to store AIC values
-aic_values <- numeric(length(lags))
-
-# Fit ARIMA models with different lags
-for (i in lags) {
-  tryCatch({
-    arima_model <- Arima(data, order = c(i, 0, 0), xreg = X_matrix)
-    aic_values[i] <- AIC(arima_model)
-  }, error = function(e) {
-    # Handle any errors during model fitting
-    aic_values[i] <- Inf  # Assign a large value to skip problematic models
-  })
-}
-
-# Identify the lag with the lowest AIC
-best_lag <- lags[which.min(aic_values)]
-
-# Fit the final ARIMA model with the chosen lag
-final_arima_model <- Arima(data, order = c(best_lag, 0, 0), xreg = X_matrix)
-
-# Forecast using the test data
-forecast_result <- forecast(final_arima_model, xreg = X_matrix_test)
 forecasted_values <- forecast_result$mean
 
+#actual_data <- pv_train_od_202402$TOTAL_TRIPS
+actual_data <- pv_train_od_202402
+
+mae <- mean(abs(forecasted_values - actual_data$TOTAL_TRIPS))
+
+rmse <- sqrt(mean((forecasted_values - actual_data$TOTAL_TRIPS)^2))
+
+# compare forecasts with actual TOTAL_TRIPS
+comparison_df <- data.frame(
+  Trip = actual_data$trip, 
+  Actual = actual_data$TOTAL_TRIPS,
+  Forecasted = forecasted_values
+)
+
+write_xlsx(comparison_df, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
+
+#install.packages("openxlsx")
+library(openxlsx)
+
+write.xlsx(comparison_df, file = "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
 ```
