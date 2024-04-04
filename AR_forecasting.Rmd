@@ -163,3 +163,64 @@ comparison_df <- data.frame(
   Forecasted = forecasted_values
 )
 ```
+
+
+```{r}
+fit_arima <- function(data, order, xreg) {
+  ar_model <- Arima(data, order = c(order, 0, 0), xreg = X_matrix)
+  return(AIC(ar_model))
+}
+
+data <- combined_train_pv_od$TOTAL_TRIPS
+
+lags <- 10:15  # current best lag of 10
+
+aic_values <- numeric(length(lags))
+
+# fit diff lags to model
+for (i in seq_along(lags)) {
+  aic_values[i] <- fit_arima(data, lags[i], X_matrix)
+}
+
+best_lag <- lags[which.min(aic_values)]
+
+# order parameter specifies order(number of lags, order of difference, number of moving average components) - set to 0 for standard AR >> change accordingly 
+
+ar_model <- Arima(data, order = c(best_lag, 0, 0), xreg = X_matrix)
+summary(ar_model)
+
+forecast_result <- forecast(ar_model)
+
+print(forecast_result)
+
+
+
+
+# Define a range of lags to explore
+lags <- 15:20
+
+# Initialize a vector to store AIC values
+aic_values <- numeric(length(lags))
+
+# Fit ARIMA models with different lags
+for (i in lags) {
+  tryCatch({
+    arima_model <- Arima(data, order = c(i, 0, 0), xreg = X_matrix)
+    aic_values[i] <- AIC(arima_model)
+  }, error = function(e) {
+    # Handle any errors during model fitting
+    aic_values[i] <- Inf  # Assign a large value to skip problematic models
+  })
+}
+
+# Identify the lag with the lowest AIC
+best_lag <- lags[which.min(aic_values)]
+
+# Fit the final ARIMA model with the chosen lag
+final_arima_model <- Arima(data, order = c(best_lag, 0, 0), xreg = X_matrix)
+
+# Forecast using the test data
+forecast_result <- forecast(final_arima_model, xreg = X_matrix_test)
+forecasted_values <- forecast_result$mean
+
+```

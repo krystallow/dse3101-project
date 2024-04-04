@@ -7,7 +7,6 @@ library(tensorflow)
 
 model <- keras_model_sequential()
 
-
 # Passenger Volume for Buses - By Bus Stops (2023 Dec)
 pv_bus_202312 <- read.csv("../PV Data [Buses and Trains]/Buses/By Bus Stop/transport_node_bus_202312.csv") %>%
   mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
