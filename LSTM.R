@@ -192,7 +192,7 @@ test_set_encoded <- test_set_encoded %>%
 X_test <- as.matrix(test_set_encoded[, setdiff(names(test_set_encoded), "TOTAL_TRIPS")])
 y_test <- test_set_encoded[["TOTAL_TRIPS"]]
 
-X_test_array <- array(X, dim = c(nrow(X), 1, ncol(X)))
+X_test_array <- array(X_test, dim = c(nrow(X_test), 1, ncol(X_test)))
 
 model <- keras_model_sequential() %>%
   layer_lstm(units = 50, input_shape = c(1, ncol(X))) %>%
@@ -208,14 +208,16 @@ model %>% compile(
 # Train the model
 history <- model %>% fit(
   X_array, y,
-  epochs = 10, ## KEEP INCREASING AS LONG AS VAL LOSS IS DECREASING >> try 20 next
+  epochs = 20, ## KEEP INCREASING AS LONG AS VAL LOSS IS DECREASING >> try 20 next
   batch_size = 128,
   validation_split = 0.2,
   verbose = 1
 )
 
 
-model %>% evaluate(X_test_array, y_test, verbose = 1)
+model %>% evaluate(X_test_array, 
+                   y_test, 
+                   verbose = 1)
 
 
 y_pred <- model %>% predict(X_test_array)   
