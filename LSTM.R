@@ -46,8 +46,6 @@ train_combined_encoded <- encode_categorical(train_combined_encoded, "ORIGIN_PT_
 # You can check the first few rows to see the transformation
 head(train_combined_encoded)
 
-# Note: Repeat the process for any other categorical columns as needed
-
 
 # Assuming train_combined_encoded and test_202402_encoded are your current datasets
 
@@ -84,8 +82,19 @@ y_test_subset <- y_subset[(split_index + 1):10000]
 X_train_array <- array(X_train_subset, dim = c(nrow(X_train_subset), 1, ncol(X_train_subset)))
 X_test_array <- array(X_test_subset, dim = c(nrow(X_test_subset), 1, ncol(X_test_subset)))
 
+#install.packages("tensorflow")
+#library(tensorflow)
+#tensorflow::install_tensorflow()
+
+#install.packages("keras")
+#keras::install_keras()
+#library(keras)
+#devtools::install_github("rstudio/reticulate")
 
 
+#library(reticulate)
+#use_python("/Users/elizaong/pythonenviron/bin/python", required = TRUE)
+#Sys.setenv(RETICULATE_PYTHON = "/Users/elizaong/pythonenviron/bin/python")
 library(keras)
 
 # Define the LSTM model
@@ -141,7 +150,7 @@ ggplot(loss_data_long, aes(x = Epoch, y = value, color = variable)) +
 
 # Evaluate the model on the test set
 model %>% evaluate(X_test_array, y_test_subset, verbose = 1)
-
+# loss: 70990.265625 mean_absolute_error: 82.4373092651367
 
 
 
