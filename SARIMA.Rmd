@@ -15,7 +15,6 @@ library(tidyverse)
 library(lubridate)
 library(forecast)
 ```
-# TRAIN
 
 ## redo
 ```{r}
@@ -78,7 +77,7 @@ fit <- auto.arima(ts_data_weekday, seasonal = TRUE)
 print(fit) #ARIMA (2,1,0)(1,0,0)
 
 # Fit the model with additional regressors
-#fit <- Arima(ts_data_weekday, order=c(2,1,0), seasonal=c(1,0,0), xreg=additional_regressors)
+fit <- Arima(ts_data_weekday, order=c(5,1,1), seasonal=c(0,0,1), xreg=additional_regressors)
 ```
 
 ## Testing 
@@ -119,6 +118,10 @@ pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
 pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
 #pv_train_od_202402 = pv_train_od_202402 %>%
 #  mutate(month = substring(YEAR_MONTH,6,7))
+
+# combine data from Dec 2023 - Feb 2024 of passenger volume for trains with origin destinations
+pv_train_od = rbind(pv_train_od_202312,pv_train_od_202401)
+testing = pv_train_od_202402
 
 # Combine date and hour
 pv_train_od$ds <- as.POSIXct(paste(pv_train_od$ds, pv_train_od$TIME_PER_HOUR), format = "%Y-%m-%d %H")
@@ -171,10 +174,10 @@ additional_regressors <- cbind(pv_train_od$DAY_TYPE, pv_train_od$trip)
 future_regressors <- cbind(testing$DAY_TYPE, testing$trip)
 
 fit <- auto.arima(ts_data, seasonal = TRUE)
-print(fit) #ARIMA (0,1,1)(0,0,1)
+print(fit) #ARIMA (5,1,1)(0,0,2)
 
 # Fit the model with additional regressors
-fit <- Arima(ts_data, order=c(0,1,1), seasonal=c(0,0,1), xreg=additional_regressors)
+fit <- Arima(ts_data, order=c(2,1,1), seasonal=c(0,0,2), xreg=additional_regressors)
 ```
 
 ## Testing 
@@ -192,6 +195,8 @@ test_results <- data.frame(
 RMSE <- sqrt(mean((test_results$Actual - test_results$Predicted)^2))
 
 print(paste("Root Mean Squared Error: ", RMSE))
+sarima = data.frame(forecasts[["mean"]])
+write_xlsx(sarima, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_sarima_2lags.xlsx")
 ```
 
 ## Plotting

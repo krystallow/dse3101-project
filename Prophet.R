@@ -96,13 +96,14 @@ rmse <- sqrt(mean((testing$y - forecast$yhat)^2))
 print(paste("Root Mean Squared Error: ", rmse))
 
 # Plot the forecast
+plot(m, forecast)
 prophet_plot_components(m, forecast)
-
+dyplot.prophet(m, forecast)
 #write_xlsx(forecast, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_prophet.xlsx")
 
 
 
-# =========== failed run ===============
+# =========== failed run: rmse too high ===============
 testing <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv")
 node_202401 = read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv")
 node_202312 = read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv")
