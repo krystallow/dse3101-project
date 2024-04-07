@@ -152,8 +152,15 @@ ggplot(loss_data_long, aes(x = Epoch, y = value, color = variable)) +
 model %>% evaluate(X_test_array, y_test_subset, verbose = 1)
 # loss: 70990.265625 mean_absolute_error: 82.4373092651367
 
+y_pred <- model %>% predict(X_test_array)   
+RMSE <- sqrt(mean((y_test_subset - y_pred)^2)) 
+cat("Root Mean Squared Error (RMSE):", round(RMSE, 2), "\n")  
 
+forecasted_data <- data.frame(   
+  Predicted_TOTAL_TRIPS = y_pred,   
+  X_test_subset )  
 
+write.csv(forecasted_data, file = "../forecast_LSTM.xlsx", row.names = FALSE)
 
 
 
