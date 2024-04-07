@@ -65,7 +65,6 @@ y_subset <- subset_data[["TOTAL_TRIPS"]]
 X_subset_array <- array(X_subset, dim = c(nrow(X_subset), 1, ncol(X_subset)))
 
 
-
 # Determine the split index
 split_index <- 8500
 
@@ -75,6 +74,8 @@ y_train_subset <- y_subset[1:split_index]
 
 X_test_subset <- X_subset[(split_index + 1):10000, ]
 y_test_subset <- y_subset[(split_index + 1):10000]
+
+
 
 
 
@@ -164,9 +165,64 @@ write.csv(forecasted_data, file = "../forecast_LSTM.xlsx", row.names = FALSE)
 
 
 
+##:::KRYSTAL TESTING :::##
+training_set <- rbind(pv_train_202312, pv_train_202401)
+training_set$YEAR_MONTH <- as.Date(paste0(training_set$YEAR_MONTH, "-01"))
+training_set_encoded <- encode_categorical(training_set, "DAY_TYPE")
+training_set_encoded <- encode_categorical(training_set_encoded, "DESTINATION_PT_CODE")
+training_set_encoded <- encode_categorical(training_set_encoded, "ORIGIN_PT_CODE")
+
+training_set_encoded <- training_set_encoded %>%
+  select(-DESTINATION_PT_CODE, -ORIGIN_PT_CODE, -PT_TYPE, -DAY_TYPE, -YEAR_MONTH)
+
+X <- as.matrix(training_set_encoded[, setdiff(names(training_set_encoded), "TOTAL_TRIPS")])
+y <- training_set_encoded[["TOTAL_TRIPS"]]
+
+X_array <- array(X, dim = c(nrow(X), 1, ncol(X)))
+
+test_set <- test_202402
+test_set$YEAR_MONTH <- as.Date(paste0(test_set$YEAR_MONTH, "-01"))
+test_set_encoded <- encode_categorical(test_set, "DAY_TYPE")
+test_set_encoded <- encode_categorical(test_set_encoded, "DESTINATION_PT_CODE")
+test_set_encoded <- encode_categorical(test_set_encoded, "ORIGIN_PT_CODE")
+
+test_set_encoded <- test_set_encoded %>%
+  select(-DESTINATION_PT_CODE, -ORIGIN_PT_CODE, -PT_TYPE, -DAY_TYPE, -YEAR_MONTH)
+
+X_test <- as.matrix(test_set_encoded[, setdiff(names(test_set_encoded), "TOTAL_TRIPS")])
+y_test <- test_set_encoded[["TOTAL_TRIPS"]]
+
+X_test_array <- array(X, dim = c(nrow(X), 1, ncol(X)))
+
+model <- keras_model_sequential() %>%
+  layer_lstm(units = 50, input_shape = c(1, ncol(X))) %>%
+  layer_dense(units = 1)
+
+# Compile the model
+model %>% compile(
+  optimizer = 'adam',
+  loss = 'mean_squared_error',
+  metrics = c('mean_absolute_error')
+)
+
+# Train the model
+history <- model %>% fit(
+  X_array, y,
+  epochs = 10, ## KEEP INCREASING AS LONG AS VAL LOSS IS DECREASING >> try 20 next
+  batch_size = 128,
+  validation_split = 0.2,
+  verbose = 1
+)
 
 
+model %>% evaluate(X_test_array, y_test, verbose = 1)
 
+
+y_pred <- model %>% predict(X_test_array)   
+RMSE <- sqrt(mean((y_test - y_pred)^2)) 
+cat("Root Mean Squared Error (RMSE):", round(RMSE, 2), "\n")
+
+##:::KRYSTAL TESTING :::## 
 
 
 
