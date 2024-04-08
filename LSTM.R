@@ -163,6 +163,22 @@ forecasted_data <- data.frame(
 library(openxlsx)
 write.xlsx(forecasted_data, file = "../forecast_LSTM.xlsx", rowNames = FALSE)
 
+# Plot ROC Curve
+library(pROC)
+
+roc_obj <- roc(y_test_subset, y_pred)
+
+plot(roc_obj, col = "blue", lwd = 2, main = "ROC Curve")
+
+# Add diagonal line representing random classifier
+lines(x = c(0, 1), y = c(0, 1), col = "red", lty = 2)
+
+# Calculate AUC
+auc <- roc_obj$auc
+
+# Print AUC value
+text(0.7, 0.2, paste("AUC = ", round(auc, 2)), col = "blue", cex = 1.2)
+
 
 
 ##:::KRYSTAL TESTING :::##

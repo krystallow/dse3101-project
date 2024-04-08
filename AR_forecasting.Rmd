@@ -50,6 +50,109 @@ pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
                                  ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 ```
 
+## If ignore End Destination >> IGNORE
+```{r}
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Origin Destination (2024 Jan)
+pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Origin Destination (2024 Feb)
+pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+
+pv_train_od_202312 <- pv_train_od_202312 %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+  
+pv_train_od_202312$YEAR_MONTH_HOUR = pv_train_od_202312$YEAR_MONTH
+pv_train_od_202312$YEAR_MONTH_HOUR = as.POSIXct(paste(pv_train_od_202312$YEAR_MONTH_HOUR, pv_train_od_202312$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
+pv_train_od_202312$Year <- as.integer(format(pv_train_od_202312$YEAR_MONTH_HOUR, "%Y"))
+pv_train_od_202312$Month <- as.integer(format(pv_train_od_202312$YEAR_MONTH_HOUR, "%m"))
+pv_train_od_202312$Hour <- as.integer(format(pv_train_od_202312$YEAR_MONTH_HOUR, "%H"))
+
+pv_train_od_202312$trip_numeric <- as.numeric(as.factor(pv_train_od_202312$ORIGIN_PT_CODE))
+
+
+# only use Dec 2023 to train
+training <- pv_train_od_202312 %>%
+  group_by(ORIGIN_PT_CODE, trip_numeric, DAY_TYPE, TIME_PER_HOUR) %>%
+  summarise(total_trips = sum(TOTAL_TRIPS))
+
+
+pv_train_od_202402 <- pv_train_od_202402 %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+  
+pv_train_od_202402$YEAR_MONTH_HOUR = pv_train_od_202402$YEAR_MONTH
+pv_train_od_202402$YEAR_MONTH_HOUR = as.POSIXct(paste(pv_train_od_202402$YEAR_MONTH_HOUR, pv_train_od_202402$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
+pv_train_od_202402$Year <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%Y"))
+pv_train_od_202402$Month <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%m"))
+pv_train_od_202402$Hour <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%H"))
+
+pv_train_od_202402$trip_numeric <- as.numeric(as.factor(pv_train_od_202402$ORIGIN_PT_CODE))
+
+testing <- pv_train_od_202402 %>%
+  group_by(ORIGIN_PT_CODE, trip_numeric, DAY_TYPE, TIME_PER_HOUR) %>%
+  summarise(total_trips = sum(TOTAL_TRIPS))
+
+
+X_regressors <- data.frame( 
+  Hour = as.integer(training$TIME_PER_HOUR),
+  trip_numeric = as.numeric(training$trip_numeric)
+  )
+
+X_matrix <- as.matrix(X_regressors[, c("Hour", "trip_numeric")])
+
+data <- training$total_trips
+
+ar_model <- Arima(data, order = c(2, 0, 0), xreg = X_matrix)
+summary(ar_model)
+
+test_data <- data.frame(
+  Hour = as.integer(testing$TIME_PER_HOUR),
+  trip_numeric = as.numeric(testing$trip_numeric)
+)
+
+X_matrix_test <- as.matrix(test_data[, c("Hour", "trip_numeric")])
+
+forecast_result <- forecast(ar_model, xreg = X_matrix_test)
+
+forecasted_values <- forecast_result$mean
+
+actual_data <- testing
+
+mae <- mean(abs(forecasted_values - actual_data$total_trips)) ## MAE: 38.19458
+
+rmse <- sqrt(mean((forecasted_values - actual_data$total_trips)^2)) ## RMSE: 95.0159
+
+# compare forecasts with actual TOTAL_TRIPS
+comparison_df <- data.frame(
+  YEAR_MONTH_HOUR = actual_data$YEAR_MONTH_HOUR,
+  Hour = actual_data$Hour, 
+  Trip = actual_data$trip, 
+  Actual = actual_data$TOTAL_TRIPS,
+  Forecasted = forecasted_values
+)
+
+summary(forecasted_values)
+
+
+library(openxlsx)
+write.xlsx(comparison_df, file = "../forecast_ar.xlsx", rowNames = FALSE)
+```
+
+
 ```{r}
 ## By Station
 training_weekend <- rbind(pv_train_202312_weekend, pv_train_202401_weekend) %>%
@@ -310,12 +413,13 @@ rmse <- sqrt(mean((forecasted_values - actual_data$TOTAL_TRIPS)^2))
 
 # compare forecasts with actual TOTAL_TRIPS
 comparison_df <- data.frame(
+  YEAR_MONTH_HOUR = actual_data$YEAR_MONTH_HOUR,
+  Hour = actual_data$Hour, 
   Trip = actual_data$trip, 
   Actual = actual_data$TOTAL_TRIPS,
   Forecasted = forecasted_values
 )
 
-write_xlsx(comparison_df, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
 
 #install.packages("openxlsx")
 library(openxlsx)
@@ -323,8 +427,28 @@ library(openxlsx)
 write.xlsx(comparison_df, file = "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
 ```
 
-```{r}
+
+##### LATEST >> ignore 
 ### splitting with split index 
+```{r}
+library(tidyverse)
+library(stringr)
+library(forecast)
+
+# Passenger Volume for Trains - By Origin Destination (2023 Dec)
+pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Origin Destination (2024 Jan)
+pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
+
+# Passenger Volume for Trains - By Origin Destination (2024 Feb)
+pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv") %>%
+  mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
+                                 ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 
 combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_od_202402) %>%
   mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
@@ -377,12 +501,14 @@ forecasted_values <- forecast_result$mean
 
 actual_data <- testing
 
-mae <- mean(abs(forecasted_values - actual_data$TOTAL_TRIPS))
+mae <- mean(abs(forecasted_values - actual_data$TOTAL_TRIPS)) ## MAE: 38.19458
 
-rmse <- sqrt(mean((forecasted_values - actual_data$TOTAL_TRIPS)^2))
+rmse <- sqrt(mean((forecasted_values - actual_data$TOTAL_TRIPS)^2)) ## RMSE: 95.0159
 
 # compare forecasts with actual TOTAL_TRIPS
 comparison_df <- data.frame(
+  YEAR_MONTH_HOUR = actual_data$YEAR_MONTH_HOUR,
+  Hour = actual_data$Hour, 
   Trip = actual_data$trip, 
   Actual = actual_data$TOTAL_TRIPS,
   Forecasted = forecasted_values
@@ -393,5 +519,42 @@ summary(forecasted_values)
 
 library(openxlsx)
 write.xlsx(comparison_df, file = "../forecast_ar.xlsx", rowNames = FALSE)
+```
 
+### Time Series and Residual Plot
+```{r}
+str(comparison_df)
+comparison_df$Hour <- as.integer(testing$Hour)  # Assuming Hour is included in the testing data
+comparison_df$Trip <- factor(comparison_df$Trip)
+
+# Create time series plot
+ggplot(comparison_df, aes(x = Hour, y = TOTAL_TRIPS, color = "Actual")) +
+  geom_line(aes(y = Actual), linetype = "solid") +
+  geom_line(aes(y = Forecasted), linetype = "dashed", color = "blue") +
+  labs(x = "Hour", y = "Total Trips", color = "Series") +
+  scale_color_manual(values = c("Actual" = "black", "Forecasted" = "blue")) +
+  theme_minimal() +
+  ggtitle("Actual vs. Forecasted Total Trips") +
+  theme(legend.position = "top")
+```
+
+
+### ROC Curve
+```{r}
+library(pROC)
+
+# Create ROC curve object
+roc_obj <- roc(comparison_df$Actual, comparison_df$Forecasted)
+
+# Plot ROC curve
+plot(roc_obj, col = "blue", lwd = 2, main = "ROC Curve")
+
+# Add diagonal line representing random classifier
+lines(x = c(0, 1), y = c(0, 1), col = "red", lty = 2)
+
+# Calculate AUC
+auc <- roc_obj$auc
+
+# Print AUC value
+text(0.7, 0.2, paste("AUC =", round(auc, 2)), col = "blue", cex = 1.2)
 ```
