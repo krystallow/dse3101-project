@@ -173,8 +173,7 @@ additional_regressors <- cbind(pv_train_od$DAY_TYPE, pv_train_od$trip)
 
 future_regressors <- cbind(testing$DAY_TYPE, testing$trip)
 
-fit <- auto.arima(ts_data, seasonal = TRUE)
-print(fit) #ARIMA (5,1,1)(0,0,2)
+#fit <- auto.arima(ts_data, seasonal = TRUE)
 
 # Fit the model with additional regressors
 fit <- Arima(ts_data, order=c(2,1,1), seasonal=c(0,0,2), xreg=additional_regressors)
@@ -213,4 +212,80 @@ lines(forecasts$TIME_PER_HOUR, col = "red")
 # Add a legend
 legend("topleft", legend = c("Actual", "Predicted"), col = c("blue", "red"), lty = 1)
 
+```
+
+
+# V3
+```{r}
+# Passenger Volume for Trains - By Train Stops (2024 Jan)
+pv_train_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv")
+
+# Passenger Volume for Trains - By Train Stops (2024 Feb)
+test_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
+
+
+# Passenger Volume for Trains - By Origin Destination (2023 Dec)
+pv_train_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
+
+train_combined <- rbind(pv_train_202312, pv_train_202401, test_202402)
+
+# Assuming the first day of each month for the YEAR_MONTH column
+train_combined$YEAR_MONTH <- as.Date(paste0(train_combined$YEAR_MONTH, "-01"))
+
+# Drop the specified columns from the training dataset
+train_combined <- train_combined %>%
+  select(-DESTINATION_PT_CODE, -ORIGIN_PT_CODE, -PT_TYPE, -DAY_TYPE, -YEAR_MONTH)
+
+# Selecting the first 10,000 rows for both features and target variable
+subset_data <- train_combined_encoded[1:10000, ]
+X_subset <- as.matrix(subset_data[, setdiff(names(subset_data), "TOTAL_TRIPS")])
+y_subset <- subset_data[["TOTAL_TRIPS"]]
+
+# Reshape input to be 3D [samples, time steps, features] for LSTM
+X_subset_array <- array(X_subset, dim = c(nrow(X_subset), 1, ncol(X_subset)))
+
+
+# Determine the split index
+split_index <- 8500
+
+# Split the features and target into training and testing sets
+X_train_subset <- X_subset[1:split_index, ]
+y_train_subset <- y_subset[1:split_index]
+
+X_test_subset <- X_subset[(split_index + 1):10000, ]
+y_test_subset <- y_subset[(split_index + 1):10000]
+```
+
+```{r}
+ts_data <- ts(y_train_subset, frequency = 20) #change to time series with hourly seasonality
+# Fit the SARIMA model
+# Define your additional regressors
+additional_regressors <- cbind(pv_train_od$DAY_TYPE, pv_train_od$trip)
+
+future_regressors <- cbind(testing$DAY_TYPE, testing$trip)
+
+fit <- auto.arima(ts_data, seasonal = TRUE)
+print(fit) #ARIMA (5,1,1)(0,0,2)
+
+# Fit the model with additional regressors
+fit <- Arima(ts_data, order=c(2,1,1), seasonal=c(0,0,2), xreg=additional_regressors)
+```
+
+## Testing 
+```{r}
+# Generate forecasts
+forecasts <- forecast(fit, xreg=future_regressors,h = 804012)
+
+# Compare forecasts to actual test data
+test_results <- data.frame(
+  Actual = testing$TOTAL_TRIPS,
+  Predicted = forecasts$mean
+)
+
+# Calculate error metrics
+RMSE <- sqrt(mean((test_results$Actual - test_results$Predicted)^2))
+
+print(paste("Root Mean Squared Error: ", RMSE))
+sarima = data.frame(forecasts[["mean"]])
+write_xlsx(sarima, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_sarima_v3.xlsx")
 ```
