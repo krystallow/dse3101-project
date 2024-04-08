@@ -68,6 +68,10 @@ X_subset_array <- array(X_subset, dim = c(nrow(X_subset), 1, ncol(X_subset)))
 
 # Determine the split index
 split_index <- 8500
+## 8500: eval(model) loss: 70990.265625 mean_absolute_error: 82.4373092651367
+### train_combined_encoded[1:10000, ]
+### train_subset 1:8500, test_subset: (split_index + 1):10000
+
 
 # Split the features and target into training and testing sets
 X_train_subset <- X_subset[1:split_index, ]
@@ -148,11 +152,14 @@ forecasted_data <- data.frame(
   Predicted_TOTAL_TRIPS = y_pred,   
   X_test_subset )  
 
-write.csv(forecasted_data, file = "../forecast_LSTM.xlsx", row.names = FALSE)
+library(openxlsx)
+write.xlsx(forecasted_data, file = "../forecast_LSTM.xlsx", rowNames = FALSE)
 
 
 
 ##:::KRYSTAL TESTING :::##
+
+### if we use dec2023 and jan2024 to train, feb2024 to test
 training_set <- rbind(pv_train_202312, pv_train_202401)
 training_set$YEAR_MONTH <- as.Date(paste0(training_set$YEAR_MONTH, "-01"))
 training_set_encoded <- encode_categorical(training_set, "DAY_TYPE")
@@ -210,6 +217,7 @@ model %>% evaluate(X_test_array,
 y_pred <- model %>% predict(X_test_array)   
 RMSE <- sqrt(mean((y_test - y_pred)^2)) 
 cat("Root Mean Squared Error (RMSE):", round(RMSE, 2), "\n")
+# Root Mean Squared Error (RMSE): 416.61 << worse, overfitting
 
 ##:::KRYSTAL TESTING :::## 
 
