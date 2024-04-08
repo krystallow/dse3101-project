@@ -392,7 +392,6 @@ summary(forecasted_values)
 
 
 library(openxlsx)
-write_xlsx(comparison_df, file="../forecast_ar.xlsx", rowNames =FALSE)
 write.xlsx(comparison_df, file = "../forecast_ar.xlsx", rowNames = FALSE)
 
 ```
