@@ -315,8 +315,6 @@ comparison_df <- data.frame(
   Forecasted = forecasted_values
 )
 
-plot(actual_data$TOTAL_TRIPS, forecasted_values)
-
 write_xlsx(comparison_df, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
 
 #install.packages("openxlsx")
