@@ -145,8 +145,20 @@ model %>% evaluate(X_test_array, y_test_subset, verbose = 1)
 # loss: 70990.265625 mean_absolute_error: 82.4373092651367
 
 y_pred <- model %>% predict(X_test_array)   
-RMSE <- sqrt(mean((y_test_subset - y_pred)^2)) 
-cat("Root Mean Squared Error (RMSE):", round(RMSE, 2), "\n")  
+
+library(Metrics)
+RMSE <- rmse(y_test_subset, y_pred)
+cat("Root Mean Squared Error (RMSE):", round(RMSE, 2), "\n")
+
+residuals <- y_test_subset - y_pred
+
+squared_residuals <- residuals^2
+
+mean_squared_residuals <- mean(squared_residuals)
+
+RMSFE <- sqrt(mean_squared_residuals)
+cat("Root Mean Squared Forecast Error (RMSFE):", round(RMSFE, 2), "\n")
+
 
 forecasted_data <- data.frame(   
   Predicted_TOTAL_TRIPS = y_pred,   
