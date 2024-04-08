@@ -322,3 +322,77 @@ library(openxlsx)
 
 write.xlsx(comparison_df, file = "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
 ```
+
+```{r}
+### splitting with split index 
+
+combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401, pv_train_od_202402) %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+  
+combined_train_pv_od$YEAR_MONTH_HOUR = combined_train_pv_od$YEAR_MONTH
+combined_train_pv_od$YEAR_MONTH_HOUR = as.POSIXct(paste(combined_train_pv_od$YEAR_MONTH_HOUR, combined_train_pv_od$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
+combined_train_pv_od$Year <- as.integer(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%Y"))
+combined_train_pv_od$Month <- as.integer(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%m"))
+combined_train_pv_od$Hour <- as.integer(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%H"))
+combined_train_pv_od$trip_numeric <- as.numeric(as.factor(combined_train_pv_od$trip))
+
+# Determine the split index
+split_index <- 8500
+
+combined_train_pv_od <- combined_train_pv_od %>%
+  select(trip, trip_numeric, YEAR_MONTH_HOUR, seasonal_dummy, TOTAL_TRIPS, Year, Month,Hour) %>%
+  arrange(trip, Year, Month, Hour)
+
+training <- combined_train_pv_od[1:split_index, ]
+testing <- combined_train_pv_od[(split_index + 1):10000, ]
+
+
+X_regressors <- data.frame( 
+  Hour = as.integer(training$Hour),
+  trip_numeric = as.numeric(training$trip_numeric)
+  )
+
+X_matrix <- as.matrix(X_regressors[, c("Hour", "trip_numeric")])
+
+data <- training$TOTAL_TRIPS
+
+ar_model <- Arima(data, order = c(2, 0, 0), xreg = X_matrix)
+summary(ar_model)
+
+test_data <- data.frame(
+  Hour = as.integer(testing$Hour),
+  trip_numeric = as.numeric(testing$trip_numeric)
+)
+
+X_matrix_test <- as.matrix(test_data[, c("Hour", "trip_numeric")])
+
+forecast_result <- forecast(ar_model, xreg = X_matrix_test)
+
+forecasted_values <- forecast_result$mean
+
+actual_data <- testing
+
+mae <- mean(abs(forecasted_values - actual_data$TOTAL_TRIPS))
+
+rmse <- sqrt(mean((forecasted_values - actual_data$TOTAL_TRIPS)^2))
+
+# compare forecasts with actual TOTAL_TRIPS
+comparison_df <- data.frame(
+  Trip = actual_data$trip, 
+  Actual = actual_data$TOTAL_TRIPS,
+  Forecasted = forecasted_values
+)
+
+summary(forecasted_values)
+
+
+library(openxlsx)
+write_xlsx(comparison_df, file="../forecast_ar.xlsx", rowNames =FALSE)
+write.xlsx(comparison_df, file = "../forecast_ar.xlsx", rowNames = FALSE)
+
+```
