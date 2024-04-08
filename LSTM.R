@@ -82,8 +82,6 @@ y_test_subset <- y_subset[(split_index + 1):10000]
 
 
 
-
-
 # Reshape input to be 3D [samples, time steps, features] for LSTM
 X_train_array <- array(X_train_subset, dim = c(nrow(X_train_subset), 1, ncol(X_train_subset)))
 X_test_array <- array(X_test_subset, dim = c(nrow(X_test_subset), 1, ncol(X_test_subset)))
@@ -109,8 +107,6 @@ history <- model %>% fit(
   validation_split = 0.2,
   verbose = 1
 )
-
-
 
 
 # Plotting training & validation loss values
