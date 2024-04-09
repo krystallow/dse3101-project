@@ -192,10 +192,11 @@ test_results <- data.frame(
 
 # Calculate error metrics
 RMSE <- sqrt(mean((test_results$Actual - test_results$Predicted)^2))
+mae <- mean(abs(test_results$Actual - test_results$Predicted)^2)
 
 print(paste("Root Mean Squared Error: ", RMSE))
+print(paste("Mean Absolute Error: ", mae))
 sarima = data.frame(forecasts[["mean"]])
-write_xlsx(sarima, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_sarima_2lags.xlsx")
 ```
 
 ## Plotting
