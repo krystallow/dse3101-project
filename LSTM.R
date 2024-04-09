@@ -92,6 +92,16 @@ model <- keras_model_sequential() %>%
   layer_lstm(units = 50, input_shape = c(1, ncol(X_train_subset))) %>%
   layer_dense(units = 1)
 
+
+### NEW
+model <- keras_model_sequential() %>%
+  layer_lstm(units = 50, return_sequences = TRUE, input_shape = c(1, ncol(X_train_subset))) %>%
+  layer_lstm(units = 30, return_sequences = FALSE) %>% # Additional LSTM layer
+  layer_dense(units = 20, activation = 'relu') %>% # An additional dense layer for complexity
+  layer_dense(units = 1) # Output layer
+### NEW
+
+
 # Compile the model
 model %>% compile(
   optimizer = 'adam',
@@ -107,7 +117,6 @@ history <- model %>% fit(
   validation_split = 0.2,
   verbose = 1
 )
-
 
 # Plotting training & validation loss values
 plot(history)
@@ -141,6 +150,39 @@ model %>% evaluate(X_test_array, y_test_subset, verbose = 1)
 # loss: 70990.265625 mean_absolute_error: 82.4373092651367
 
 y_pred <- model %>% predict(X_test_array)   
+
+
+### NEW
+
+predictions <- model %>% predict(X_test_array)
+
+predictions_vector <- as.vector(predictions)
+
+summary(predictions_vector)
+
+# Create a data frame for comparing actual vs. predicted values
+forecast_df <- data.frame(True_Values = y_test_subset, 
+                            Predicted_Values = predictions_vector,
+                            X_test_subset)
+
+library(openxlsx)
+write.xlsx(forecast_df, file = "../new_forecast_LSTM.xlsx", rowNames = FALSE)
+
+# View the first few rows of the comparison
+head(comparison_df)
+# Calculate MAE
+mae <- mean(abs(comparison_df$True_Values - comparison_df$Predicted_Values)) ### mae 86.20542 
+# Calculate RMSE
+rmse <- sqrt(mean((comparison_df$True_Values - comparison_df$Predicted_Values)^2))  ### rmse 255.3118 
+
+cat("Mean Absolute Error: ", mae, "
+")
+cat("Root Mean Squared Error: ", rmse, "
+")
+
+### NEW
+
+
 
 library(Metrics)
 RMSE <- rmse(y_test_subset, y_pred)
