@@ -2,22 +2,16 @@
 library(tidyverse)
 library(lubridate)
 library(prophet)
-
+library(readxl)
 
 # Passenger Volume for Trains - By Origin Destination (2023 Dec)
 pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv")
-#pv_train_od_202312 = pv_train_od_202312 %>%
-#  mutate(month = substring(YEAR_MONTH,6,7))
 
 # Passenger Volume for Trains - By Origin Destination (2024 Jan)
 pv_train_od_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv")
-#pv_train_od_202401 = pv_train_od_202401 %>%
-#  mutate(month = substring(YEAR_MONTH,6,7))
 
 # Passenger Volume for Trains - By Origin Destination (2024 Feb) TESTING!
 pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
-#pv_train_od_202402 = pv_train_od_202402 %>%
-#  mutate(month = substring(YEAR_MONTH,6,7))
 
 # combine data from Dec 2023 - Feb 2024 of passenger volume for trains with origin destinations
 pv_train_od = rbind(pv_train_od_202312,pv_train_od_202401)
@@ -40,7 +34,7 @@ testing$ds = as.POSIXct(paste(testing$ds, testing$TIME_PER_HOUR), format = "%Y-%
 
 #converting everything to numeric for Prophet
 pv_train_od$y = pv_train_od$TOTAL_TRIPS
-pv_train_od$trip <- as.numeric(factor(pv_train_od$trip))
+#pv_train_od$trip <- as.numeric(factor(pv_train_od$trip))
 pv_train_od$ORIGIN_PT_CODE <- as.numeric(factor(pv_train_od$ORIGIN_PT_CODE))
 pv_train_od$DESTINATION_PT_CODE <- as.numeric(factor(pv_train_od$DESTINATION_PT_CODE))
 pv_train_od$DAY_TYPE <- as.numeric(factor(pv_train_od$DAY_TYPE))
@@ -53,20 +47,22 @@ testing$DAY_TYPE <- as.numeric(factor(testing$DAY_TYPE))
 
 
 pv_train_od = pv_train_od %>%
-  arrange(trip,TIME_PER_HOUR) %>%
+#  arrange(trip,ds) %>%
   select(-PT_TYPE) %>%
   select(-TOTAL_TRIPS) %>%
-  select(-YEAR_MONTH) %>%
-  select(-ORIGIN_PT_CODE) %>%
-  select(-DESTINATION_PT_CODE)
+  select(-YEAR_MONTH)
+#  select(-ORIGIN_PT_CODE) %>%
+#  select(-DESTINATION_PT_CODE) %>%
+ # select(-TIME_PER_HOUR)
 
 testing = testing %>%
-  arrange(trip,TIME_PER_HOUR) %>%
+#  arrange(trip,ds) %>%
   select(-PT_TYPE) %>%
   select(-TOTAL_TRIPS) %>%
-  select(-YEAR_MONTH) %>%
-  select(-ORIGIN_PT_CODE) %>%
-  select(-DESTINATION_PT_CODE)
+  select(-YEAR_MONTH)
+#  select(-ORIGIN_PT_CODE) %>%
+ # select(-DESTINATION_PT_CODE)%>%
+#  select(-TIME_PER_HOUR)
 
 # Initialize model
 m <- prophet()
@@ -77,7 +73,8 @@ m <- add_seasonality(m, name='hourly', period=20, fourier.order=3)
 
 # Add additional regressors
 m <- add_regressor(m, 'DAY_TYPE')
-m <- add_regressor(m, 'trip')
+m <- add_regressor(m, 'ORIGIN_PT_CODE')
+m = add_regressor(m,'DESTINATION_PT_CODE')
 
 # Fit the model
 m <- fit.prophet(m, pv_train_od)
@@ -86,19 +83,32 @@ m <- fit.prophet(m, pv_train_od)
 # Create future dataframe
 future <- data.frame(ds = testing$ds)
 future$DAY_TYPE <- testing$DAY_TYPE
-future$trip <- testing$trip
+#future$trip <- testing$trip
+future$ORIGIN_PT_CODE <- testing$ORIGIN_PT_CODE
+future$DESTINATION_PT_CODE <- testing$DESTINATION_PT_CODE
 
 # Predict
-forecast <- predict(m, future)
+#forecast <- predict(m, future)
+forecast_excel = read_xlsx("../prophet_forecast_final.xlsx")
 
 # Calculate RMSE
-rmse <- sqrt(mean((testing$y - forecast$yhat)^2))
+rmse <- sqrt(mean((testing$y - forecast_excel$yhat)^2))
 print(paste("Root Mean Squared Error: ", rmse))
+mae <- mean(abs(testing$y - forecast_excel$yhat))
+print(paste("Mean Absolute Error: ", mae))
 
 # Plot the forecast
-plot(m, forecast)
+plot(testing$TIME_PER_HOUR, testing$y, main = "Actual vs Predicted", xlab = "Time", ylab = "Total Trips", col = "blue")
+
+# Add the predicted values to the plot
+lines(forecast_excel$yhat, col = "red")
+
+# Add a legend
+legend("topleft", legend = c("Actual", "Predicted"), col = c("blue", "red"), lty = 1)
+
+
 prophet_plot_components(m, forecast)
-dyplot.prophet(m, forecast)
+#dyplot.prophet(m, forecast)
 #write_xlsx(forecast, "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_prophet.xlsx")
 
 
