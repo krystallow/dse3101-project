@@ -160,10 +160,42 @@ predictions_vector <- as.vector(predictions)
 
 summary(predictions_vector)
 
+df <- data.frame(Predictions = predictions_vector)
+
+# Generate the box plot
+boxplot(df$Predictions,
+        main = "Predictions Box Plot",
+        ylab = "Predicted Values",
+        notch = TRUE,
+        col = "lightblue",
+        border = "darkblue",
+        names = c("Min", "Q1", "Median", "Q3", "Max"))
+
+# Add horizontal lines for quartiles
+abline(h = quantile(predictions_vector, probs = c(0.25, 0.5, 0.75)),
+       col = "red", lty = 2)
+
+# Add legend for quartiles
+legend("topright", legend = c("Q1 (25%)", "Median (50%)", "Q3 (75%)"),
+       col = "red", lty = 2, bty = "n")
+
+
+
+
 # Create a data frame for comparing actual vs. predicted values
 forecast_df <- data.frame(True_Values = y_test_subset, 
                             Predicted_Values = predictions_vector,
                             X_test_subset)
+
+plot(x = forecast_df$Predicted_Values, 
+     y = forecast_df$True_Values, 
+     xlab = "Predicted Values", 
+     ylab = "True Values",
+     main = "Predicted vs. Actual Values",
+     col = "blue")
+
+# Add a diagonal line for reference (perfect prediction)
+abline(a = 0, b = 1, col = "red", lwd=3)
 
 library(openxlsx)
 write.xlsx(forecast_df, file = "../new_forecast_LSTM.xlsx", rowNames = FALSE)
