@@ -69,7 +69,7 @@ pv_train_od_202402$Hour <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR,
 pv_train_od_202402$trip_numeric <- as.numeric(as.factor(pv_train_od_202402$trip))
 
 ```
-
+## Prepare Data for Model
 ```{r}
 training <- combined_train_pv_od %>%
   select(trip, trip_numeric, YEAR_MONTH_HOUR, seasonal_dummy, TOTAL_TRIPS, Year, Month,Hour) %>%
@@ -84,15 +84,18 @@ X_matrix <- as.matrix(X[, c("Hour", "trip_numeric")])
 
 data <- combined_train_pv_od$TOTAL_TRIPS
 
-ar_model <- Arima(data, order = c(2, 0, 0), xreg = X_matrix)
-summary(ar_model)
-
 test_data <- data.frame(
   Hour = as.integer(pv_train_od_202402$Hour),
   trip_numeric = as.numeric(pv_train_od_202402$trip_numeric)
 )
 
 X_matrix_test <- as.matrix(test_data[, c("Hour", "trip_numeric")])
+```
+
+## Forecast
+```{r}
+ar_model <- Arima(data, order = c(2, 0, 0), xreg = X_matrix)
+summary(ar_model)
 
 forecast_result <- forecast(ar_model, xreg = X_matrix_test)
 
