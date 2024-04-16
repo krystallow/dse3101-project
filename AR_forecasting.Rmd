@@ -121,7 +121,26 @@ comparison_df <- data.frame(
 library(openxlsx)
 
 write.xlsx(comparison_df, file = "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
+```
 
+
+## Determine Lags
+```{r}
+fit_arima <- function(data, order, xreg) {
+  ar_model <- Arima(data, order = c(order, 0, 0), xreg = X_matrix)
+  return(AIC(ar_model))
+}
+
+lags <- 1:5  # current best lag of 10
+
+aic_values <- numeric(length(lags))
+
+# fit diff lags to model
+for (i in seq_along(lags)) {
+  aic_values[i] <- fit_arima(data, lags[i], new_X_matrix)
+}
+
+best_lag <- lags[which.min(aic_values)]
 ```
 
 
@@ -369,7 +388,7 @@ fit_arima <- function(data, order, xreg) {
   return(AIC(ar_model))
 }
 
-lags <- 10:15  # current best lag of 10
+lags <- 1:5  # current best lag of 10
 
 aic_values <- numeric(length(lags))
 
@@ -379,7 +398,6 @@ for (i in seq_along(lags)) {
 }
 
 best_lag <- lags[which.min(aic_values)]
-best_lag <- 2
 
 # order parameter specifies order(number of lags, order of difference, number of moving average components) - set to 0 for standard AR >> change accordingly 
 
