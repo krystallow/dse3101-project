@@ -123,7 +123,6 @@ library(openxlsx)
 write.xlsx(comparison_df, file = "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
 ```
 
-
 ## Determine Lags
 ```{r}
 fit_arima <- function(data, order, xreg) {
@@ -131,7 +130,7 @@ fit_arima <- function(data, order, xreg) {
   return(AIC(ar_model))
 }
 
-lags <- 1:5  # current best lag of 10
+lags <- 1:10
 
 aic_values <- numeric(length(lags))
 
