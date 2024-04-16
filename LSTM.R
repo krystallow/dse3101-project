@@ -9,9 +9,9 @@ pv_train_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_d
 pv_train_202401 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202401.csv")
 
 # Passenger Volume for Trains - By Train Stops (2024 Feb)
-test_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
+pv_train_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202402.csv")
 
-train_combined <- rbind(pv_train_202312, pv_train_202401, test_202402)
+train_combined <- rbind(pv_train_202312, pv_train_202401, pv_train_02402)
 
 # Assuming the first day of each month for the YEAR_MONTH column
 train_combined$YEAR_MONTH <- as.Date(paste0(train_combined$YEAR_MONTH, "-01"))
@@ -64,10 +64,6 @@ X_subset_array <- array(X_subset, dim = c(nrow(X_subset), 1, ncol(X_subset)))
 
 # Determine the split index
 split_index <- 8500
-## 8500: eval(model) loss: 70990.265625 mean_absolute_error: 82.4373092651367
-### train_combined_encoded[1:10000, ]
-### train_subset 1:8500, test_subset: (split_index + 1):10000
-
 
 # Split the features and target into training and testing sets
 X_train_subset <- X_subset[1:split_index, ]
