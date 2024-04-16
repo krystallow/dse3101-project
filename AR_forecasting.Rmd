@@ -5,35 +5,15 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
+## Relevant Libraries
 ```{r}
 library(tidyverse)
 library(stringr)
 library(forecast)
 ```
 
-### Load in PV Data with Day Type Dummy - WEEKEND/HOLIDAY or WEEKDAY
+## Load in PV Data 
 ```{r}
-# Passenger Volume for Trains - By Train Stops (2023 Dec)
-pv_train_202312_weekend <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv") %>%
-  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") 
-
-pv_train_202312_weekday <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv") %>%
-  filter(DAY_TYPE == "WEEKDAY") 
-
-# Passenger Volume for Trains - By Train Stops (2024 Jan)
-pv_train_202401_weekend <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv") %>%
-  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") 
-
-pv_train_202401_weekday <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv") %>%
-  filter(DAY_TYPE == "WEEKDAY") 
-
-# Passenger Volume for Trains - By Train Stops (2024 Feb)
-pv_train_202402_weekend <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv") %>%
-  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") 
-
-pv_train_202402_weekday <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv") %>%
-  filter(DAY_TYPE == "WEEKDAY") 
-
 # Passenger Volume for Trains - By Origin Destination (2023 Dec)
 pv_train_od_202312 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origin_destination_train_202312.csv") %>%
   mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
@@ -49,6 +29,105 @@ pv_train_od_202402 <- read.csv("../PV Data [Buses and Trains]/Trains/By OD/origi
   mutate(seasonal_dummy = ifelse(DAY_TYPE == "WEEKENDS/HOLIDAY", 1, 
                                  ifelse(DAY_TYPE == "WEEKDAY", 0, NA)))
 ```
+
+## Data Preprocessing 
+```{r}
+# Merge all Train By OD Passenger Volume data for Dec 2023 and Jan 2024 
+combined_train_pv_od <- rbind(pv_train_od_202312, pv_train_od_202401) %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+  
+combined_train_pv_od$YEAR_MONTH_HOUR = combined_train_pv_od$YEAR_MONTH
+combined_train_pv_od$YEAR_MONTH_HOUR = as.POSIXct(paste(combined_train_pv_od$YEAR_MONTH_HOUR, combined_train_pv_od$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
+combined_train_pv_od$Year <- as.integer(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%Y"))
+combined_train_pv_od$Month <- as.integer(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%m"))
+combined_train_pv_od$Hour <- as.integer(format(combined_train_pv_od$YEAR_MONTH_HOUR, "%H"))
+combined_train_pv_od$trip_numeric <- as.numeric(as.factor(combined_train_pv_od$trip))
+
+str(combined_train_pv_od)
+
+
+### Testing Data > Feb 2024
+pv_train_od_202402 <- pv_train_od_202402 %>%
+  mutate(trip = str_c(ORIGIN_PT_CODE, DESTINATION_PT_CODE, sep="-")) %>%
+  mutate(trip = as.factor(trip)) %>%
+  mutate(seasonal_dummy = as.factor(seasonal_dummy)) %>%
+  mutate(ORIGIN_PT_CODE = as.factor(ORIGIN_PT_CODE)) %>%
+  mutate(DESTINATION_PT_CODE = as.factor(DESTINATION_PT_CODE)) %>%
+  mutate(YEAR_MONTH = as.Date(paste(YEAR_MONTH,"01",sep = "-")))
+  
+pv_train_od_202402$YEAR_MONTH_HOUR = pv_train_od_202402$YEAR_MONTH
+pv_train_od_202402$YEAR_MONTH_HOUR = as.POSIXct(paste(pv_train_od_202402$YEAR_MONTH_HOUR, pv_train_od_202402$TIME_PER_HOUR), format = "%Y-%m-%d %H") 
+pv_train_od_202402$Year <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%Y"))
+pv_train_od_202402$Month <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%m"))
+pv_train_od_202402$Hour <- as.integer(format(pv_train_od_202402$YEAR_MONTH_HOUR, "%H"))
+pv_train_od_202402$trip_numeric <- as.numeric(as.factor(pv_train_od_202402$trip))
+
+```
+
+```{r}
+training <- combined_train_pv_od %>%
+  select(trip, trip_numeric, YEAR_MONTH_HOUR, seasonal_dummy, TOTAL_TRIPS, Year, Month,Hour) %>%
+  arrange(trip, Year, Month, Hour)
+
+X <- data.frame( 
+  Hour = as.integer(training$Hour),
+  trip_numeric = as.numeric(training$trip_numeric)
+  )
+
+X_matrix <- as.matrix(X[, c("Hour", "trip_numeric")])
+
+data <- combined_train_pv_od$TOTAL_TRIPS
+
+ar_model <- Arima(data, order = c(2, 0, 0), xreg = X_matrix)
+summary(ar_model)
+
+test_data <- data.frame(
+  Hour = as.integer(pv_train_od_202402$Hour),
+  trip_numeric = as.numeric(pv_train_od_202402$trip_numeric)
+)
+
+X_matrix_test <- as.matrix(test_data[, c("Hour", "trip_numeric")])
+
+forecast_result <- forecast(ar_model, xreg = X_matrix_test)
+
+forecasted_values <- forecast_result$mean
+
+actual_data <- pv_train_od_202402
+
+mae <- mean(abs(forecasted_values - actual_data$TOTAL_TRIPS))
+
+rmse <- sqrt(mean((forecasted_values - actual_data$TOTAL_TRIPS)^2))
+
+# Compare forecasts with actual TOTAL_TRIPS
+comparison_df <- data.frame(
+  YEAR_MONTH_HOUR = actual_data$YEAR_MONTH_HOUR,
+  Hour = actual_data$Hour, 
+  Trip = actual_data$trip, 
+  Actual = actual_data$TOTAL_TRIPS,
+  Forecasted = forecasted_values
+)
+
+
+#install.packages("openxlsx")
+library(openxlsx)
+
+write.xlsx(comparison_df, file = "../PV Data [Buses and Trains]/Trains/By Train Station/forecast_ar.xlsx")
+
+```
+
+
+
+
+
+
+
+
+
 
 ## If ignore End Destination >> IGNORE
 ```{r}
@@ -154,6 +233,29 @@ write.xlsx(comparison_df, file = "../forecast_ar.xlsx", rowNames = FALSE)
 
 # IGNORE
 ```{r}
+# Passenger Volume for Trains - By Train Stops (2023 Dec)
+pv_train_202312_weekend <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv") %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") 
+
+pv_train_202312_weekday <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202312.csv") %>%
+  filter(DAY_TYPE == "WEEKDAY") 
+
+# Passenger Volume for Trains - By Train Stops (2024 Jan)
+pv_train_202401_weekend <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv") %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") 
+
+pv_train_202401_weekday <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202401.csv") %>%
+  filter(DAY_TYPE == "WEEKDAY") 
+
+# Passenger Volume for Trains - By Train Stops (2024 Feb)
+pv_train_202402_weekend <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv") %>%
+  filter(DAY_TYPE == "WEEKENDS/HOLIDAY") 
+
+pv_train_202402_weekday <- read.csv("../PV Data [Buses and Trains]/Trains/By Train Station/transport_node_train_202402.csv") %>%
+  filter(DAY_TYPE == "WEEKDAY") 
+
+
+
 ## By Station
 training_weekend <- rbind(pv_train_202312_weekend, pv_train_202401_weekend) %>%
   select(-DAY_TYPE, -PT_TYPE, -TOTAL_TAP_OUT_VOLUME) %>%
