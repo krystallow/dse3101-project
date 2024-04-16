@@ -10,6 +10,7 @@ output: html_document
 library(tidyverse)
 library(stringr)
 library(forecast)
+library(lubridate)
 ```
 
 ## Load in PV Data 
