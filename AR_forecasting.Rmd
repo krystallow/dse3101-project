@@ -136,7 +136,7 @@ aic_values <- numeric(length(lags))
 
 # fit diff lags to model
 for (i in seq_along(lags)) {
-  aic_values[i] <- fit_arima(data, lags[i], new_X_matrix)
+  aic_values[i] <- fit_arima(data, lags[i], X_matrix)
 }
 
 best_lag <- lags[which.min(aic_values)]
