@@ -82,17 +82,17 @@ pv_train_od = pv_train_od %>%
 
 ## Training and Testing
 ```{r}
-ts_data <- ts(pv_train_od$TOTAL_TRIPS, frequency = 20) #change to time series with hourly seasonality
+ts_data <- ts(pv_train_od$TOTAL_TRIPS, frequency = 19) #change to time series with hourly seasonality
 # Fit the SARIMA model
 # Define your additional regressors
 additional_regressors <- cbind(pv_train_od$DAY_TYPE, pv_train_od$trip)
 
 future_regressors <- cbind(testing$DAY_TYPE, testing$trip)
 
-#fit <- auto.arima(ts_data, seasonal = TRUE)
+#fit <- auto.arima(ts_data, seasonal = TRUE) (5,1,1) (0,0,2)
 
 # Fit the model with additional regressors
-fit <- Arima(ts_data, order=c(2,1,1), seasonal=c(0,0,2), xreg=additional_regressors)
+fit <- Arima(ts_data, order=c(5,1,1), seasonal=c(0,0,2), xreg=additional_regressors)
 
 # Generate forecasts
 forecasts <- forecast(fit, xreg=future_regressors,h = 804012)
